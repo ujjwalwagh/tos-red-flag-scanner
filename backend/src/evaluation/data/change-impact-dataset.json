@@ -1,0 +1,332 @@
+[
+  {
+    "id": "CHANGE_01_IDENTICAL",
+    "category": "ARBITRATION",
+    "oldClauseText": "Any dispute, claim, or controversy arising out of or relating to this Agreement shall be determined by arbitration in New York before a single arbitrator.",
+    "newClauseText": "Any dispute, claim, or controversy arising out of or relating to this Agreement shall be determined by arbitration in New York before a single arbitrator.",
+    "groundTruth": {
+      "changeMagnitude": "NONE",
+      "userRiskDelta": "NEUTRAL"
+    },
+    "rationale": "Exact verbatim clause text; no change whatsoever."
+  },
+  {
+    "id": "CHANGE_02_PUNCTUATION_TYPO",
+    "category": "ARBITRATION",
+    "oldClauseText": "The parties agree to resolve all disputes exclusively through confidential individual arbitration in Dover, Delaware.",
+    "newClauseText": "The parties agree to resolve all disputes exclusively through confidential, individual arbitration in Dover, Delaware.",
+    "groundTruth": {
+      "changeMagnitude": "NONE",
+      "userRiskDelta": "NEUTRAL"
+    },
+    "rationale": "Minor comma punctuation addition with zero substantive or contractual effect."
+  },
+  {
+    "id": "CHANGE_03_WORDING_NEUTRAL",
+    "category": "PRIVACY_DATA_SHARING",
+    "oldClauseText": "We collect information you provide directly to us when you create an account, such as your username and email address.",
+    "newClauseText": "We collect information you provide directly to us when registering an account, including your username and email address.",
+    "groundTruth": {
+      "changeMagnitude": "MINOR",
+      "userRiskDelta": "NEUTRAL"
+    },
+    "rationale": "Simple synonym swap ('create' to 'registering') without expanding data collection scope."
+  },
+  {
+    "id": "CHANGE_04_CONTACT_EMAIL",
+    "category": "GOVERNING_LAW",
+    "oldClauseText": "If you have questions regarding these terms, contact our legal department at legal@company.com.",
+    "newClauseText": "If you have questions regarding these terms, contact our compliance team at privacy@company.com.",
+    "groundTruth": {
+      "changeMagnitude": "MINOR",
+      "userRiskDelta": "NEUTRAL"
+    },
+    "rationale": "Updated administrative contact email address; no change to substantive consumer rights."
+  },
+  {
+    "id": "CHANGE_05_DEADLINE_EXTENDED",
+    "category": "AUTO_RENEWAL",
+    "oldClauseText": "You may cancel your monthly subscription up to 3 days prior to the scheduled renewal billing date.",
+    "newClauseText": "You may cancel your monthly subscription up to 7 days prior to the scheduled renewal billing date.",
+    "groundTruth": {
+      "changeMagnitude": "MODERATE",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Lengthened cancellation notice deadline imposes stricter burdens on consumers to avoid auto-charges."
+  },
+  {
+    "id": "CHANGE_06_OPT_OUT_WINDOW_REDUCED",
+    "category": "ARBITRATION",
+    "oldClauseText": "You may opt out of this arbitration agreement by notifying us in writing within 60 days of opening your account.",
+    "newClauseText": "You may opt out of this arbitration agreement by notifying us in writing within 14 days of opening your account.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Substantially cuts consumer arbitration opt-out window from 60 days to 14 days, increasing binding dispute lock-in."
+  },
+  {
+    "id": "CHANGE_07_ARBITRATION_INTRODUCED",
+    "category": "ARBITRATION",
+    "oldClauseText": "Either party may bring an action in any court of competent jurisdiction to enforce rights under this Agreement.",
+    "newClauseText": "You agree that all disputes shall be resolved exclusively through mandatory binding individual arbitration and waive all rights to a court trial.",
+    "groundTruth": {
+      "changeMagnitude": "CRITICAL",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Replaces standard court access with mandatory binding arbitration, eliminating user constitutional trial rights."
+  },
+  {
+    "id": "CHANGE_08_CLASS_ACTION_WAIVER_ADDED",
+    "category": "ARBITRATION",
+    "oldClauseText": "Disputes shall be handled in accordance with standard civil litigation rules.",
+    "newClauseText": "You expressly waive any right to bring or participate in any class action, collective lawsuit, or representative proceeding against us.",
+    "groundTruth": {
+      "changeMagnitude": "CRITICAL",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Introduces aggressive class action waiver eliminating collective legal redress for consumers."
+  },
+  {
+    "id": "CHANGE_09_REFUND_ELIMINATED",
+    "category": "AUTO_RENEWAL",
+    "oldClauseText": "If you cancel within 30 days of annual renewal, you are entitled to a full pro-rata refund of unspent subscription fees.",
+    "newClauseText": "All subscription fees are non-refundable upon payment, and no refunds or credits will be issued for partial cancellation periods.",
+    "groundTruth": {
+      "changeMagnitude": "CRITICAL",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Completely eliminates 30-day pro-rata refund policy, substituting strict zero-refund forfeiture terms."
+  },
+  {
+    "id": "CHANGE_10_REFUND_ADDED",
+    "category": "AUTO_RENEWAL",
+    "oldClauseText": "All fees paid under this agreement are strictly non-refundable under all circumstances.",
+    "newClauseText": "If you are dissatisfied with the service within the first 14 days, we will provide a full 100% refund upon written request.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "DECREASED_RISK"
+    },
+    "rationale": "Introduces a consumer-friendly 14-day refund window where none previously existed, reducing consumer financial risk."
+  },
+  {
+    "id": "CHANGE_11_DATA_BROKER_SHARING_ADDED",
+    "category": "PRIVACY_DATA_SHARING",
+    "oldClauseText": "We do not sell your personal information or share personal data with external third parties without your explicit opt-in consent.",
+    "newClauseText": "We may share, monetize, or sell pseudonymized behavioral profiles, purchase histories, and location data to third-party marketing brokers.",
+    "groundTruth": {
+      "changeMagnitude": "CRITICAL",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Reverses strict non-sale privacy pledge to authorize commercial data brokering and location sharing."
+  },
+  {
+    "id": "CHANGE_12_PERPETUAL_IP_LICENSE_ADDED",
+    "category": "USER_CONTENT_RIGHTS",
+    "oldClauseText": "You retain full ownership of your content and grant us a limited license solely to display your uploads within the app during your account tenure.",
+    "newClauseText": "You grant us a perpetual, irrevocable, worldwide, royalty-free, fully sublicensable license to use, reproduce, modify, and commercialize your content.",
+    "groundTruth": {
+      "changeMagnitude": "CRITICAL",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Converts limited hosting license into perpetual, irrevocable, sublicensable commercial exploitation rights over user IP."
+  },
+  {
+    "id": "CHANGE_13_UNILATERAL_PRICE_HIKE_ADDED",
+    "category": "UNILATERAL_CHANGE",
+    "oldClauseText": "Any change to subscription pricing requires 60 days advance written notice and requires affirmative user agreement prior to renewal.",
+    "newClauseText": "We reserve the right to increase subscription fees at our discretion upon 7 days electronic notice, effective on your next billing date.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Slashes price hike notice from 60 days to 7 days and eliminates affirmative consent requirement."
+  },
+  {
+    "id": "CHANGE_14_UNILATERAL_MODIFICATION_IMMEDIATE",
+    "category": "UNILATERAL_CHANGE",
+    "oldClauseText": "We may amend these terms by posting a revised agreement at least 30 days before the modifications take effect.",
+    "newClauseText": "We may modify these terms at any time without prior notice, with changes taking immediate effect upon publication on our website.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Removes 30-day advance notice protection in favor of immediate unilateral modifications without notice."
+  },
+  {
+    "id": "CHANGE_15_LIABILITY_CAP_LOWERED",
+    "category": "LIABILITY_LIMITATION",
+    "oldClauseText": "Our total aggregate liability for all claims arising out of this service shall be capped at $1,000 or the total fees paid in the past 12 months.",
+    "newClauseText": "Our total aggregate liability for all claims arising under this agreement shall in no event exceed fifty dollars ($50.00).",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Dramatically reduces maximum damages recovery cap from $1,000/annual spend down to nominal $50 cap."
+  },
+  {
+    "id": "CHANGE_16_LIABILITY_EXCLUSION_EXPANDED",
+    "category": "LIABILITY_LIMITATION",
+    "oldClauseText": "Neither party shall be liable for indirect, incidental, or special consequential damages.",
+    "newClauseText": "Company shall have no liability for data loss, server downtime, security breaches, cyberattacks, or any lost profits whatsoever.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Broadens liability disclaimer to disclaim all accountability for catastrophic data loss and cyber breaches."
+  },
+  {
+    "id": "CHANGE_17_USER_INDEMNITY_INTRODUCED",
+    "category": "INDEMNIFICATION",
+    "oldClauseText": "Each party shall be responsible for its own legal compliance and costs in connection with use of the platform.",
+    "newClauseText": "You agree to defend, indemnify, and hold harmless company from any third-party claims, liabilities, damages, and attorney fees arising from your use.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Imposes one-sided indemnification obligation onto consumer, forcing user to pay company legal defense costs."
+  },
+  {
+    "id": "CHANGE_18_ACCOUNT_TERMINATION_IMMEDIATE",
+    "category": "ACCOUNT_SUSPENSION",
+    "oldClauseText": "We may suspend your account for material breach upon 15 days written notice and opportunity to cure.",
+    "newClauseText": "We reserve the right to terminate or suspend your account immediately at our sole discretion without notice or cause.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Replaces 15-day notice and cure protection with immediate at-will termination without cause."
+  },
+  {
+    "id": "CHANGE_19_JURY_WAIVER_REMOVED",
+    "category": "ARBITRATION",
+    "oldClauseText": "You agree to waive any right to a jury trial in any proceeding arising out of or related to these terms.",
+    "newClauseText": "All disputes between the parties shall be heard before a court of competent jurisdiction under applicable state rules.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "DECREASED_RISK"
+    },
+    "rationale": "Restores full access to jury and court proceedings, removing previously enforced jury waiver."
+  },
+  {
+    "id": "CHANGE_20_OPT_OUT_ADDED",
+    "category": "ARBITRATION",
+    "oldClauseText": "Arbitration under this section is mandatory and strictly binding on all registered users without exception.",
+    "newClauseText": "You may opt out of this arbitration provision by emailing optout@company.com within 30 days of creating your account.",
+    "groundTruth": {
+      "changeMagnitude": "MODERATE",
+      "userRiskDelta": "DECREASED_RISK"
+    },
+    "rationale": "Grants users an accessible electronic opt-out mechanism for mandatory arbitration."
+  },
+  {
+    "id": "CHANGE_21_PHONE_CANCELLATION_MANDATED",
+    "category": "AUTO_RENEWAL",
+    "oldClauseText": "You can easily cancel your recurring subscription online at any time by clicking cancel in your account settings.",
+    "newClauseText": "To cancel your subscription, you must telephone our customer service center between 9am and 5pm Eastern time on business days.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Eliminates one-click online cancellation and introduces burdensome phone-only cancellation roadblock."
+  },
+  {
+    "id": "CHANGE_22_DATA_RETENTION_EXPANDED",
+    "category": "DATA_RETENTION",
+    "oldClauseText": "User account records and personal data are deleted within 30 days following verified account closure.",
+    "newClauseText": "We retain user records, identity documents, and usage histories indefinitely following account closure for legal compliance.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Replaces 30-day data purging commitment with indefinite permanent retention of personal records."
+  },
+  {
+    "id": "CHANGE_23_MODERATE_PARAGRAPH_RESTRUCTURE",
+    "category": "GOVERNING_LAW",
+    "oldClauseText": "These terms are governed by the laws of California. Venue for any judicial proceeding shall be in San Francisco.",
+    "newClauseText": "These terms are governed by California state law. Any judicial proceeding shall be conducted in federal or state courts in Santa Clara County, California.",
+    "groundTruth": {
+      "changeMagnitude": "MINOR",
+      "userRiskDelta": "NEUTRAL"
+    },
+    "rationale": "Shifts venue between adjacent Northern California counties without changing legal standard or governing jurisdiction."
+  },
+  {
+    "id": "CHANGE_24_AUTO_RENEWAL_INTERVAL_SWITCHED",
+    "category": "AUTO_RENEWAL",
+    "oldClauseText": "Subscriptions are billed on a flexible monthly basis and may be canceled at the end of each monthly period.",
+    "newClauseText": "Subscriptions are billed on an upfront annual basis and auto-renew automatically every 12 months with non-refundable billing.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Converts month-to-month billing into 12-month lock-in commitment with non-refundable upfront fees."
+  },
+  {
+    "id": "CHANGE_25_BIOMETRIC_DATA_INTRODUCED",
+    "category": "PRIVACY_DATA_SHARING",
+    "oldClauseText": "We collect technical diagnostic logs, device operating system versions, and basic crash reports.",
+    "newClauseText": "We collect facial geometry, voice prints, and biometric identifiers to verify user identity and train computer vision algorithms.",
+    "groundTruth": {
+      "changeMagnitude": "CRITICAL",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Introduces invasive collection of biometric facial and voice prints for AI model training."
+  },
+  {
+    "id": "CHANGE_26_MORAL_RIGHTS_WAIVED",
+    "category": "USER_CONTENT_RIGHTS",
+    "oldClauseText": "Creators retain attribution rights and moral rights in all creative works published through the platform.",
+    "newClauseText": "You irrevocably waive all moral rights, rights of attribution, and integrity rights in any content submitted to the service.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Strips creator moral rights and attribution guarantees previously protected under earlier terms."
+  },
+  {
+    "id": "CHANGE_27_DISCLAIMER_OF_UPTIME",
+    "category": "WARRANTY_DISCLAIMER",
+    "oldClauseText": "We commit to maintaining 99.9% service uptime and will provide service level credits for unexcused outages.",
+    "newClauseText": "The services are provided strictly as-is and as-available, with no uptime warranties, SLAs, or outage credits of any kind.",
+    "groundTruth": {
+      "changeMagnitude": "SIGNIFICANT",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Eliminates 99.9% SLA commitment and credit remedies, shifting all outage risk onto the customer."
+  },
+  {
+    "id": "CHANGE_28_SLIGHT_STYLISTIC_POLISH",
+    "category": "USER_CONTENT_RIGHTS",
+    "oldClauseText": "You represent and warrant that you own or have obtained all necessary licenses to publish your submissions.",
+    "newClauseText": "You represent and confirm that you possess all necessary rights and licenses to publish your submitted materials.",
+    "groundTruth": {
+      "changeMagnitude": "MINOR",
+      "userRiskDelta": "NEUTRAL"
+    },
+    "rationale": "Stylistic simplification of legal phrasing without changing underlying warranty requirements."
+  },
+  {
+    "id": "CHANGE_29_VENUE_MOVED_OVERSEAS",
+    "category": "GOVERNING_LAW",
+    "oldClauseText": "Any legal claims shall be resolved in consumer courts in your state of residence.",
+    "newClauseText": "All legal actions must be commenced exclusively in the courts of the Cayman Islands, and you waive all jurisdictional objections.",
+    "groundTruth": {
+      "changeMagnitude": "CRITICAL",
+      "userRiskDelta": "INCREASED_RISK"
+    },
+    "rationale": "Moves dispute forum to distant offshore tax haven, imposing severe financial and geographical barriers on consumer claims."
+  },
+  {
+    "id": "CHANGE_30_DATA_DELETION_STREAMLINED",
+    "category": "DATA_RETENTION",
+    "oldClauseText": "To delete personal data, you must mail a notarized written request with two forms of photo ID to our physical headquarters.",
+    "newClauseText": "You may delete your account and request complete data purging instantly by clicking delete in privacy settings.",
+    "groundTruth": {
+      "changeMagnitude": "MODERATE",
+      "userRiskDelta": "DECREASED_RISK"
+    },
+    "rationale": "Eliminates hostile notarized mail requirement in favor of immediate one-click data deletion, reducing user privacy exposure."
+  }
+]

@@ -1,0 +1,608 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TOS Red Flag Scanner</title>
+    <meta
+      name="description"
+      content="TOS Red Flag Scanner provides deep document intelligence for Terms of Service and privacy policies. Surface risky clauses, understand their impact, and ask grounded questions."
+    />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="TOS Red Flag Scanner" />
+    <meta
+      property="og:description"
+      content="Paste a policy URL, upload PDF, or text. Surface critical risk clauses translated into clear, plain English."
+    />
+    <meta property="og:image" content="/share-card.svg" />
+    <meta property="og:image:alt" content="TOS Red Flag Scanner preview card" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="TOS Red Flag Scanner" />
+    <meta
+      name="twitter:description"
+      content="Detect risky contract clauses in seconds with strict and broad document analysis."
+    />
+    <meta name="twitter:image" content="/share-card.svg" />
+    <meta name="theme-color" content="#101315" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="apple-touch-icon" href="/logo.svg" />
+    <link rel="stylesheet" href="./styles.css?v=20261008a" />
+  </head>
+  <body>
+    <!-- Background elements preserved for functional safety -->
+    <div class="bg-video-wrap" aria-hidden="true">
+      <video
+        id="bg-video"
+        class="bg-video"
+        autoplay
+        muted
+        loop
+        playsinline
+        webkit-playsinline
+        preload="auto"
+      >
+        <source src="/background.mp4?v=20260420h" type="video/mp4" />
+      </video>
+    </div>
+    <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
+    <canvas id="spark-layer" class="spark-layer" aria-hidden="true"></canvas>
+    <div class="blob blob-a" aria-hidden="true"></div>
+    <div class="blob blob-b" aria-hidden="true"></div>
+    <div class="blob blob-c" aria-hidden="true"></div>
+
+    <div class="app-layout">
+      <!-- Top Navigation -->
+      <header class="topbar">
+        <div class="topbar-inner">
+          <div class="brand">
+            <img src="/logo.svg" alt="" class="brand-logo" width="28" height="28" />
+            <span class="brand-name">TOS Red Flag Scanner</span>
+          </div>
+          <nav class="topbar-nav" aria-label="Main Navigation">
+            <a href="#how-it-works" class="nav-link">How it works</a>
+            <a href="#about" class="nav-link">About</a>
+          </nav>
+        </div>
+      </header>
+
+      <!-- Main Shell -->
+      <main class="shell">
+        <!-- Hero Section -->
+        <header class="hero">
+          <div class="hero-eyebrow">TERMS OF SERVICE ANALYSIS</div>
+          <h1 class="hero-title">Understand what you're agreeing to.</h1>
+          <p class="hero-lead">
+            Scan a Terms of Service or privacy policy, surface risky clauses,
+            understand their impact, and ask questions grounded in the document.
+          </p>
+        </header>
+
+        <!-- Centered Document Intake Workspace -->
+        <section class="workspace-card" aria-label="Document Analysis Workspace">
+          <form id="scan-form" autocomplete="off">
+            <!-- Input Method Selector Tabs -->
+            <div class="input-tabs" role="tablist" aria-label="Document Input Method">
+              <button
+                type="button"
+                role="tab"
+                id="tab-url"
+                class="input-tab active"
+                aria-selected="true"
+                aria-controls="pane-url"
+                data-tab="url"
+              >
+                <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span>Policy URL</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="tab-file"
+                class="input-tab"
+                aria-selected="false"
+                aria-controls="pane-file"
+                data-tab="file"
+              >
+                <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <span>Upload PDF</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                id="tab-text"
+                class="input-tab"
+                aria-selected="false"
+                aria-controls="pane-text"
+                data-tab="text"
+              >
+                <svg class="tab-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                <span>Paste Text</span>
+              </button>
+            </div>
+
+            <!-- Input Method Panes -->
+            <div class="tab-content-area">
+              <!-- URL Input Lane -->
+              <div id="pane-url" class="lane lane-url active" role="tabpanel" aria-labelledby="tab-url">
+                <label for="policy-url" class="field-label">Document or Agreement URL</label>
+                <div class="input-wrap">
+                  <input
+                    id="policy-url"
+                    name="url"
+                    type="url"
+                    class="text-input"
+                    placeholder="https://example.com/terms-of-service"
+                    spellcheck="false"
+                  />
+                </div>
+                <p class="field-help">Public Terms of Service, Privacy Policy, or End User License Agreement URL.</p>
+              </div>
+
+              <!-- PDF Upload Lane -->
+              <div id="pane-file" class="lane lane-file hidden" role="tabpanel" aria-labelledby="tab-file">
+                <label for="policy-file" class="field-label">Upload Policy PDF Document</label>
+                <div class="file-drop-area">
+                  <input
+                    id="policy-file"
+                    name="policyFile"
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    class="file-input"
+                  />
+                </div>
+                <div id="pdf-meta-box" class="pdf-meta-box hidden" aria-live="polite">
+                  <div class="pdf-meta-row">
+                    <div class="pdf-file-info">
+                      <span class="pdf-file-name" id="pdf-file-name">filename.pdf</span>
+                      <span class="pdf-file-size" id="pdf-file-size">0 KB</span>
+                    </div>
+                    <span class="pdf-ingest-badge" id="pdf-ingest-badge">Ingested</span>
+                  </div>
+                  <div class="pdf-stats" id="pdf-stats">
+                    <span id="pdf-page-count">0 pages</span> &bull; <span id="pdf-word-count">0 words</span> &bull; <span id="pdf-segment-count">0 clauses</span>
+                  </div>
+                  <div id="pdf-ocr-warning" class="pdf-ocr-warning hidden">
+                    <strong>OCR Notice:</strong> Scanned pages detected with no extractable text layer.
+                  </div>
+                </div>
+              </div>
+
+              <!-- Plain Text Lane -->
+              <div id="pane-text" class="lane lane-text hidden" role="tabpanel" aria-labelledby="tab-text">
+                <label for="policy-text" class="field-label">Paste Terms of Service Text</label>
+                <textarea
+                  id="policy-text"
+                  name="policyText"
+                  rows="7"
+                  class="textarea-input"
+                  placeholder="Paste complete agreement or clause text here..."
+                ></textarea>
+                <div class="text-meta">
+                  <span id="text-length">0 characters</span>
+                  <span id="text-reco">Recommended: at least 500 characters</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Workspace Controls Bar: Analysis Depth + Risk Priorities -->
+            <div class="workspace-controls-bar">
+              <!-- Compact Analysis Mode Segmented Control -->
+              <div class="mode-control-wrap">
+                <span class="control-label">Analysis Mode:</span>
+                <div class="mode-toggle" role="radiogroup" aria-label="Analysis Mode">
+                  <label class="mode-option">
+                    <input type="radio" name="scanMode" value="broad" checked />
+                    <span>Broad</span>
+                  </label>
+                  <label class="mode-option">
+                    <input type="radio" name="scanMode" value="strict" />
+                    <span>Strict</span>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Risk Priorities Expandable Disclosure -->
+              <details class="preferences-wrapper">
+                <summary class="preferences-summary">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+                  <span>Risk priorities</span>
+                  <span class="summary-hint">— Choose the issues that matter most to you</span>
+                </summary>
+                <div class="preferences-grid">
+                  <label class="pref-label">
+                    <span>Arbitration & Court Waivers:</span>
+                    <select id="pref-arbitration" name="pref_arbitration" class="preferences-select">
+                      <option value="5" selected>5 - Critical Priority</option>
+                      <option value="4">4 - High Priority</option>
+                      <option value="3">3 - Moderate Priority</option>
+                      <option value="2">2 - Low Priority</option>
+                      <option value="1">1 - Minimal Concern</option>
+                    </select>
+                  </label>
+                  <label class="pref-label">
+                    <span>Privacy & Data Sharing:</span>
+                    <select id="pref-privacy" name="pref_privacy" class="preferences-select">
+                      <option value="5" selected>5 - Critical Priority</option>
+                      <option value="4">4 - High Priority</option>
+                      <option value="3">3 - Moderate Priority</option>
+                      <option value="2">2 - Low Priority</option>
+                      <option value="1">1 - Minimal Concern</option>
+                    </select>
+                  </label>
+                  <label class="pref-label">
+                    <span>Subscriptions & Recurring Billing:</span>
+                    <select id="pref-subscription" name="pref_subscription" class="preferences-select">
+                      <option value="5">5 - Critical Priority</option>
+                      <option value="4" selected>4 - High Priority</option>
+                      <option value="3">3 - Moderate Priority</option>
+                      <option value="2">2 - Low Priority</option>
+                      <option value="1">1 - Minimal Concern</option>
+                    </select>
+                  </label>
+                  <label class="pref-label">
+                    <span>User Content IP Rights:</span>
+                    <select id="pref-content" name="pref_content" class="preferences-select">
+                      <option value="5">5 - Critical Priority</option>
+                      <option value="4" selected>4 - High Priority</option>
+                      <option value="3">3 - Moderate Priority</option>
+                      <option value="2">2 - Low Priority</option>
+                      <option value="1">1 - Minimal Concern</option>
+                    </select>
+                  </label>
+                  <label class="pref-label preferences-col-span-2">
+                    <span>Target Jurisdiction (Regulatory Review):</span>
+                    <select id="pref-jurisdiction" name="pref_jurisdiction" class="preferences-select">
+                      <option value="US_FEDERAL" selected>United States (Federal Law / FTC / FAA)</option>
+                      <option value="US_CALIFORNIA">California (CCPA/CPRA, ARL & UCL)</option>
+                      <option value="EU_GDPR">European Union (GDPR, UCTD & DSA)</option>
+                      <option value="UK_CRA">United Kingdom (Consumer Rights Act 2015)</option>
+                    </select>
+                  </label>
+                </div>
+              </details>
+            </div>
+
+            <!-- Primary Action Button -->
+            <div class="workspace-action-row">
+              <button id="scan-btn" type="submit" class="btn-analyze">Analyze document</button>
+            </div>
+          </form>
+
+          <!-- Status Indicator -->
+          <p id="status" class="status" role="status" aria-live="polite">Ready to analyze document.</p>
+        </section>
+
+        <!-- Analysis Report Summaries -->
+        <section id="summary" class="summary hidden" aria-label="Analysis Summary"></section>
+        <section id="readability" class="summary hidden" aria-label="Readability Metrics"></section>
+
+        <!-- Regulatory & Benchmarking Sections -->
+        <section id="compliance-section" class="summary hidden" aria-label="Compliance Review"></section>
+        <section id="benchmark-section" class="summary hidden" aria-label="Sector Benchmark"></section>
+
+        <!-- Comparative Multi-Vendor & Portfolio Containers -->
+        <section id="matrix-section" class="summary hidden" aria-label="Vendor Comparison"></section>
+        <section id="portfolio-section" class="summary hidden" aria-label="Vendor Portfolio"></section>
+        <section id="drift-section" class="summary hidden" aria-label="Policy Drift"></section>
+
+        <!-- Actionable Remediation Checklist -->
+        <section id="checklist-section" class="checklist-container hidden" aria-label="Actionable Checklist"></section>
+
+        <!-- Advanced Tools & Export Bar -->
+        <section id="export-bar" class="export-toolbar hidden" aria-label="Document Intelligence Tools">
+          <div class="tool-group">
+            <span class="tool-group-label">Review</span>
+            <button id="btn-open-matrix" type="button" class="btn-export">Compare Vendors</button>
+            <button id="btn-open-drift" type="button" class="btn-export">Policy Drift</button>
+            <button id="btn-open-portfolio" type="button" class="btn-export">Vendor Portfolio</button>
+          </div>
+          <div class="tool-group">
+            <span class="tool-group-label">Take Action</span>
+            <button id="btn-export-rider" type="button" class="btn-export btn-export-rider">
+              Amendment Rider (<span id="rider-count">0</span>)
+            </button>
+          </div>
+          <div class="tool-group">
+            <span class="tool-group-label">Export</span>
+            <button id="btn-export-md" type="button" class="btn-export">Markdown</button>
+            <button id="btn-export-json" type="button" class="btn-export">JSON Audit</button>
+            <button id="btn-export-print" type="button" class="btn-export">Printable Card</button>
+          </div>
+        </section>
+
+        <!-- Priority Findings Results List -->
+        <section id="results" class="results hidden" aria-label="Priority Findings"></section>
+
+        <!-- Evidence-Grounded Document Q&A Section -->
+        <section id="qa-section" class="qa-section" aria-labelledby="qa-heading">
+          <div class="qa-card">
+            <header class="qa-header">
+              <div class="qa-title-row">
+                <svg class="qa-badge-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                <h2 id="qa-heading" class="qa-title">Ask about this document</h2>
+              </div>
+              <p class="qa-subtitle">
+                Get an answer grounded in the analyzed Terms of Service.
+              </p>
+            </header>
+
+            <form id="qa-form" class="qa-form" autocomplete="off">
+              <div class="qa-input-group">
+                <label for="qa-question" class="qa-label">Ask a question about this agreement:</label>
+                <textarea
+                  id="qa-question"
+                  name="qaQuestion"
+                  class="qa-textarea qa-input"
+                  rows="2"
+                  placeholder="Can I cancel my subscription and get a refund?"
+                  minlength="3"
+                  maxlength="500"
+                  disabled
+                ></textarea>
+                <div class="qa-input-meta">
+                  <span id="qa-char-count" class="qa-char-count">0 / 500</span>
+                  <span class="qa-length-hint">Min 3 &bull; Max 500 characters</span>
+                </div>
+              </div>
+
+              <div class="qa-action-row">
+                <button id="qa-submit-btn" type="submit" class="btn-primary-action qa-submit-btn" disabled>
+                  <span>Ask Question</span>
+                </button>
+              </div>
+            </form>
+
+            <div id="qa-status" class="qa-status-box qa-status-disabled" aria-live="polite" role="status">
+              <p id="qa-status-text" class="qa-status-text">
+                Analyze a Terms of Service document first to ask questions about it.
+              </p>
+            </div>
+
+            <div id="qa-results" class="qa-results-container hidden" aria-live="polite"></div>
+          </div>
+        </section>
+
+        <!-- Informational Sections for Anchor Links -->
+        <section id="how-it-works" class="info-section">
+          <h2 class="info-heading">How It Works</h2>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-num">01</span>
+              <h3>Document Ingestion</h3>
+              <p>Extracts structure and clauses from URLs, uploaded PDFs, or pasted policy text with client-side isolation.</p>
+            </div>
+            <div class="info-item">
+              <span class="info-num">02</span>
+              <h3>Deterministic &amp; AI Analysis</h3>
+              <p>Evaluates clauses against regulatory frameworks, statutory consumer protections, and customized risk thresholds.</p>
+            </div>
+            <div class="info-item">
+              <span class="info-num">03</span>
+              <h3>Evidence-Grounded Actions</h3>
+              <p>Generates plain-English translations, contract amendment redlines, formal opt-outs, and verifiable Q&amp;A citations.</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="about" class="info-section">
+          <h2 class="info-heading">About TOS Red Flag Scanner</h2>
+          <p class="info-desc">
+            TOS Red Flag Scanner is a professional document intelligence platform engineered to make complex terms,
+            data sharing provisions, liability waivers, and subscription clauses transparent and negotiable.
+            All processing respects a strict zero-retention memory architecture.
+          </p>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        <p>TOS Red Flag Scanner &bull; Professional Document Intelligence &bull; Zero-Retention Runtime</p>
+      </footer>
+    </div>
+
+    <!-- Template for Findings Cards -->
+    <template id="flag-template">
+      <article class="flag-card">
+        <div class="card-top">
+          <div class="card-meta">
+            <span class="clause-type"></span>
+            <span class="badge"></span>
+          </div>
+          <h3 class="flag-title"></h3>
+        </div>
+        <p class="plain"></p>
+        <p class="impact"></p>
+        <blockquote class="quote"></blockquote>
+        <div class="fun-row" style="display: none;">
+          <button type="button" class="react-btn" data-reaction="🔥">🔥 intense</button>
+          <button type="button" class="react-btn" data-reaction="🤨">🤨 sketchy</button>
+          <button type="button" class="react-btn" data-reaction="✅">✅ got it</button>
+        </div>
+      </article>
+    </template>
+
+    <!-- Formal Opt-Out Notice Modal -->
+    <div id="optout-modal" class="modal-backdrop hidden" hidden role="dialog" aria-modal="true" aria-labelledby="optout-title">
+      <div class="modal-window">
+        <header class="modal-header">
+          <h3 id="optout-title">Formal Opt-Out Notice Generator</h3>
+          <button id="btn-close-modal" type="button" class="btn-close" aria-label="Close modal">&times;</button>
+        </header>
+        <div class="modal-body">
+          <div class="form-row">
+            <label>Your Full Name: <input id="optout-user-name" type="text" placeholder="Full Legal Name" /></label>
+            <label>Account Email: <input id="optout-user-email" type="email" placeholder="user@example.com" /></label>
+          </div>
+          <div class="form-row">
+            <label>Account ID / Username: <input id="optout-account-id" type="text" placeholder="Account ID" /></label>
+            <label>Company / Provider: <input id="optout-company-name" type="text" placeholder="Service Provider" /></label>
+          </div>
+          <button id="btn-generate-letter" type="button" class="btn-primary-action">Regenerate Letter</button>
+          <div class="letter-preview-box">
+            <label for="optout-letter-text">Draft Letter Text:</label>
+            <textarea id="optout-letter-text" rows="12" readonly></textarea>
+          </div>
+          <div id="optout-instructions" class="delivery-instructions"></div>
+        </div>
+        <footer class="modal-footer">
+          <button id="btn-copy-letter" type="button" class="btn-copy">Copy to Clipboard</button>
+          <button id="btn-modal-done" type="button" class="btn-secondary">Done</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Contract Amendment & Redline Modal -->
+    <div id="amendment-modal" class="modal-backdrop hidden" hidden role="dialog" aria-modal="true" aria-labelledby="amendment-title">
+      <div class="modal-window modal-window-large">
+        <header class="modal-header">
+          <div>
+            <h3 id="amendment-title">Proposed Contract Amendment</h3>
+            <p id="amendment-subtitle" class="modal-subtitle">Balanced counter-proposal & visual word redline diff</p>
+          </div>
+          <button id="btn-close-amendment" type="button" class="btn-close" aria-label="Close modal">&times;</button>
+        </header>
+        <div class="modal-body">
+          <div class="amendment-posture-selector mb-3">
+            <label class="posture-label">Negotiation Posture:</label>
+            <div class="posture-group">
+              <button type="button" class="btn-posture active" data-posture="BALANCED">Balanced (Standard Commercial)</button>
+              <button type="button" class="btn-posture" data-posture="AGGRESSIVE">Aggressive (Maximum Protection)</button>
+              <button type="button" class="btn-posture" data-posture="CONSERVATIVE">Conservative (Minimal Escalation)</button>
+            </div>
+          </div>
+
+          <div class="redline-diff-box mb-3">
+            <div class="diff-header">
+              <span class="diff-title">Visual Word Redline Diff</span>
+              <span id="diff-stats" class="diff-stats font-mono"></span>
+            </div>
+            <div id="redline-diff-content" class="diff-view-content font-mono leading-relaxed max-h-48 overflow-y-auto"></div>
+          </div>
+
+          <div class="form-group mb-3">
+            <div class="form-group-head">
+              <label for="proposed-clause-text" class="field-label-sm">Proposed Counter-Language:</label>
+              <button id="btn-copy-amendment-text" type="button" class="btn-inline-action">Copy Clause</button>
+            </div>
+            <textarea id="proposed-clause-text" rows="5" class="code-textarea font-mono" readonly></textarea>
+          </div>
+
+          <div id="talking-points-box" class="talking-points-panel mb-3">
+            <h4 class="talking-points-heading">Negotiation Talking Points:</h4>
+            <ul id="talking-points-list" class="talking-points-list"></ul>
+          </div>
+
+          <div id="fallback-box" class="fallback-panel mb-2">
+            <span class="fallback-label">Fallback Alternative:</span>
+            <span id="fallback-text"></span>
+          </div>
+
+          <div class="legal-notice-box">
+            <strong>Informational Drafting Aid:</strong> This proposal is generated automatically to facilitate self-advocacy. It does not constitute formal legal counsel.
+          </div>
+        </div>
+        <footer class="modal-footer flex justify-between items-center">
+          <button id="btn-add-to-rider" type="button" class="btn-primary-action">Add to Contract Rider</button>
+          <button id="btn-amendment-done" type="button" class="btn-secondary">Close</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Contract Amendment Rider Modal -->
+    <div id="rider-modal" class="modal-backdrop hidden" hidden role="dialog" aria-modal="true" aria-labelledby="rider-title">
+      <div class="modal-window modal-window-large">
+        <header class="modal-header">
+          <div>
+            <h3 id="rider-title">Contract Amendment Rider</h3>
+            <p class="modal-subtitle">Formal addendum unifying all proposed amendments with legal recitals & signature blocks</p>
+          </div>
+          <button id="btn-close-rider" type="button" class="btn-close" aria-label="Close modal">&times;</button>
+        </header>
+        <div class="modal-body">
+          <div class="form-row mb-3">
+            <label>Service Provider: <input id="rider-vendor-name" type="text" placeholder="Vendor / Company Name" value="Service Provider" /></label>
+            <label>Counterparty / Your Name: <input id="rider-user-name" type="text" placeholder="Your Name or Entity" value="User / Customer" /></label>
+          </div>
+          <div class="form-row mb-3">
+            <label>Agreement Title: <input id="rider-agreement-title" type="text" placeholder="e.g. Terms of Service" value="Terms of Service" /></label>
+            <label>Effective Date: <input id="rider-effective-date" type="date" /></label>
+          </div>
+
+          <div class="rider-preview-box">
+            <div class="rider-preview-head">
+              <label for="rider-markdown-text" class="field-label-sm">Rider Document (Markdown):</label>
+              <span id="rider-clause-count" class="rider-clause-count"></span>
+            </div>
+            <textarea id="rider-markdown-text" rows="14" class="code-textarea font-mono" readonly></textarea>
+          </div>
+        </div>
+        <footer class="modal-footer flex justify-between items-center">
+          <div class="flex gap-2">
+            <button id="btn-copy-rider" type="button" class="btn-copy">Copy Markdown</button>
+            <button id="btn-download-rider" type="button" class="btn-export">Download Rider (.md)</button>
+          </div>
+          <button id="btn-rider-done" type="button" class="btn-secondary">Close</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Comparative Vendor Risk Matrix Modal -->
+    <div id="matrix-modal" class="modal-backdrop hidden" hidden role="dialog" aria-modal="true" aria-labelledby="matrix-title">
+      <div class="modal-window modal-window-extra-large">
+        <header class="modal-header">
+          <div>
+            <h3 id="matrix-title">Comparative Vendor Risk Matrix</h3>
+            <p class="modal-subtitle">Side-by-side legal risk alignment and procurement recommendation</p>
+          </div>
+          <button id="btn-close-matrix" type="button" class="btn-close" aria-label="Close modal">&times;</button>
+        </header>
+        <div class="modal-body">
+          <div id="matrix-recommendation-box" class="matrix-recommendation-panel mb-3"></div>
+          <div class="matrix-table-wrapper overflow-x-auto max-h-[60vh]">
+            <table id="matrix-table" class="matrix-table w-full text-left border-collapse">
+              <thead id="matrix-thead"></thead>
+              <tbody id="matrix-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <footer class="modal-footer">
+          <button id="btn-matrix-done" type="button" class="btn-secondary">Close</button>
+        </footer>
+      </div>
+    </div>
+
+    <!-- Policy Drift & Version Comparison Modal -->
+    <div id="drift-modal" class="modal-backdrop hidden" hidden role="dialog" aria-modal="true" aria-labelledby="drift-title">
+      <div class="modal-window modal-window-large">
+        <header class="modal-header">
+          <div>
+            <h3 id="drift-title">Policy Drift & Version Comparison</h3>
+            <p class="modal-subtitle">Chronological comparison of vendor terms across historical versions</p>
+          </div>
+          <button id="btn-close-drift" type="button" class="btn-close" aria-label="Close modal">&times;</button>
+        </header>
+        <div class="modal-body">
+          <div class="form-row mb-3">
+            <label>Vendor Name: <input id="drift-vendor-name" type="text" placeholder="e.g. Acme SaaS" /></label>
+          </div>
+          <div class="drift-inputs-grid mb-3">
+            <div>
+              <label class="field-label-sm">Previous / Baseline Version Text:</label>
+              <textarea id="drift-base-text" rows="5" class="drift-textarea" placeholder="Paste earlier version terms..."></textarea>
+            </div>
+            <div>
+              <label class="field-label-sm">New / Current Version Text:</label>
+              <textarea id="drift-current-text" rows="5" class="drift-textarea" placeholder="Paste updated version terms..."></textarea>
+            </div>
+          </div>
+          <button id="btn-run-drift" type="button" class="btn-primary-action mb-3">Compute Policy Drift</button>
+          <div id="drift-results-box" class="space-y-3"></div>
+        </div>
+        <footer class="modal-footer">
+          <button id="btn-drift-done" type="button" class="btn-secondary">Close</button>
+        </footer>
+      </div>
+    </div>
+
+    <script type="module" src="./app.js?v=20261008a"></script>
+  </body>
+</html>

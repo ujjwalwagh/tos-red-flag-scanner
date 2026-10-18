@@ -1,0 +1,1430 @@
+[
+  {
+    "id": "RANK_SAAS_01",
+    "policyType": "SaaS Cloud Platform",
+    "description": "Enterprise cloud productivity suite terms with binding arbitration and cross-border data telemetry.",
+    "rationale": "Litigation-sensitive user with ARBITRATION=5 and CLASS_ACTION=5 considers dispute resolution, class action waiver, and unilateral venue clauses as highest priority.",
+    "userPreferences": {
+      "ARBITRATION": 5,
+      "PRIVACY_DATA_SHARING": 2,
+      "AUTO_RENEWAL": 2,
+      "USER_CONTENT_RIGHTS": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_saas01_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Mandatory Binding Arbitration",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "You agree that all disputes, claims or controversies arising out of or relating to these terms shall be settled exclusively by individual binding arbitration."
+      },
+      {
+        "clauseId": "c_saas01_caw",
+        "categoryId": "ARBITRATION",
+        "title": "Class Action Waiver",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "evidence": "You waive any right to assert any claims against us as a representative or member in any class, collective, or representative proceeding."
+      },
+      {
+        "clauseId": "c_saas01_jury",
+        "categoryId": "ARBITRATION",
+        "title": "Jury Trial Waiver",
+        "severity": "MEDIUM",
+        "confidence": 0.90,
+        "evidence": "Both parties irrevocably waive any right to trial by jury in any litigation arising in court."
+      },
+      {
+        "clauseId": "c_saas01_venue",
+        "categoryId": "GOVERNING_LAW",
+        "title": "Exclusive Distant Forum Selection",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "Any non-arbitrable judicial claims must be brought exclusively in the state or federal courts located in Wilmington, Delaware."
+      },
+      {
+        "clauseId": "c_saas01_limit",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Severe Liability Cap",
+        "severity": "HIGH",
+        "confidence": 0.86,
+        "evidence": "In no event shall our cumulative liability exceed the total amounts paid by you in the prior three (3) months or $100."
+      },
+      {
+        "clauseId": "c_saas01_data",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Commercial Data Sharing",
+        "severity": "MEDIUM",
+        "confidence": 0.82,
+        "evidence": "We disclose aggregated business usage metrics and device identifiers to verified commercial telemetry partners."
+      },
+      {
+        "clauseId": "c_saas01_renew",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Automatic Monthly Invoicing",
+        "severity": "LOW",
+        "confidence": 0.80,
+        "evidence": "Subscription licenses renew automatically at the standard enterprise rate on the first of each month."
+      },
+      {
+        "clauseId": "c_saas01_audit",
+        "categoryId": "ACCOUNT_SUSPENSION",
+        "title": "Discretionary Account Suspension",
+        "severity": "LOW",
+        "confidence": 0.78,
+        "evidence": "We reserve the right to temporarily suspend tenant instances during mandatory security patching windows."
+      }
+    ],
+    "groundTruthRelevant": ["c_saas01_arb", "c_saas01_caw", "c_saas01_jury", "c_saas01_venue", "c_saas01_limit"]
+  },
+  {
+    "id": "RANK_SOC_02",
+    "policyType": "Social Media Platform",
+    "description": "Creator photo and video sharing network with expansive intellectual property licensing and tracking.",
+    "rationale": "Creator user with USER_CONTENT_RIGHTS=5 prioritizes perpetual IP licenses, moral rights waivers, and commercial reuse rights over standard billing terms.",
+    "userPreferences": {
+      "USER_CONTENT_RIGHTS": 5,
+      "PRIVACY_DATA_SHARING": 3,
+      "ARBITRATION": 1,
+      "AUTO_RENEWAL": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_soc02_license",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Perpetual Sublicensable Content License",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "evidence": "You grant us a perpetual, irrevocable, worldwide, royalty-free, fully sublicensable license to use, reproduce, modify, adapt, publish, and create derivative works from your content."
+      },
+      {
+        "clauseId": "c_soc02_moral",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Waiver of Moral Rights",
+        "severity": "HIGH",
+        "confidence": 0.92,
+        "evidence": "To the maximum extent permitted by law, you unconditionally waive all moral rights, attribution claims, and integrity claims in any posted materials."
+      },
+      {
+        "clauseId": "c_soc02_commercial",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Commercial Exploitation Without Royalties",
+        "severity": "HIGH",
+        "confidence": 0.90,
+        "evidence": "We may monetize, syndicate, and display third-party advertisements alongside your content without attribution or compensation to you."
+      },
+      {
+        "clauseId": "c_soc02_ipterm",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Surviving License After Deletion",
+        "severity": "MEDIUM",
+        "confidence": 0.89,
+        "evidence": "Archival copies, shared posts, and promotional derivative media incorporating your uploaded work survive account termination indefinitely."
+      },
+      {
+        "clauseId": "c_soc02_data",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Biometric & Cross-App Tracking",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "We scan facial geometry in uploaded imagery to generate personalized content suggestions and share ad engagement telemetry."
+      },
+      {
+        "clauseId": "c_soc02_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Mandatory Arbitration Clause",
+        "severity": "HIGH",
+        "confidence": 0.88,
+        "evidence": "All individual disputes must be submitted to confidential AAA arbitration in Santa Clara, California."
+      },
+      {
+        "clauseId": "c_soc02_suspend",
+        "categoryId": "ACCOUNT_SUSPENSION",
+        "title": "Immediate Account Deactivation",
+        "severity": "LOW",
+        "confidence": 0.80,
+        "evidence": "Accounts violating community guidelines may be placed in read-only status without prior formal warning."
+      }
+    ],
+    "groundTruthRelevant": ["c_soc02_license", "c_soc02_moral", "c_soc02_commercial", "c_soc02_ipterm", "c_soc02_data"]
+  },
+  {
+    "id": "RANK_ECOM_03",
+    "policyType": "E-Commerce Marketplace",
+    "description": "Online storefront and recurring subscription replenishment service.",
+    "rationale": "Cost-conscious buyer with AUTO_RENEWAL=5 and UNILATERAL_CHANGE=4 prioritizes auto-renewal traps, cancellation obstacles, and price hike rights.",
+    "userPreferences": {
+      "AUTO_RENEWAL": 5,
+      "UNILATERAL_CHANGE": 4,
+      "ARBITRATION": 2,
+      "USER_CONTENT_RIGHTS": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_ecom03_renew",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Automatic Subscription Auto-Billing",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "Subscriptions auto-renew automatically for successive 12-month periods at the then-current non-promotional price."
+      },
+      {
+        "clauseId": "c_ecom03_norefund",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Strict Non-Refundable Fee Policy",
+        "severity": "HIGH",
+        "confidence": 0.92,
+        "evidence": "All membership renewal fees are fully earned upon billing and strictly non-refundable under all circumstances."
+      },
+      {
+        "clauseId": "c_ecom03_pricehike",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Unilateral Subscription Price Escalation",
+        "severity": "HIGH",
+        "confidence": 0.90,
+        "evidence": "We reserve the right to revise membership subscription rates at our sole discretion with 5 days electronic notice."
+      },
+      {
+        "clauseId": "c_ecom03_cancel",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Strict 30-Day Cancellation Deadlines",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "To avoid annual renewal billing, cancellation requests must be submitted in writing at least 30 days prior to renewal."
+      },
+      {
+        "clauseId": "c_ecom03_modify",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Immediate Modifications to Service Terms",
+        "severity": "MEDIUM",
+        "confidence": 0.85,
+        "evidence": "We may modify return windows, shipping subsidies, and promotional perks at any time without individual notice."
+      },
+      {
+        "clauseId": "c_ecom03_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Standard Arbitration Provision",
+        "severity": "MEDIUM",
+        "confidence": 0.84,
+        "evidence": "Consumer disputes regarding product deliveries are subject to informal settlement before JAMS arbitration."
+      },
+      {
+        "clauseId": "c_ecom03_data",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Order Fulfillment Data Transfer",
+        "severity": "LOW",
+        "confidence": 0.79,
+        "evidence": "Delivery addresses and contact names are transmitted to certified regional logistics courier networks."
+      }
+    ],
+    "groundTruthRelevant": ["c_ecom03_renew", "c_ecom03_norefund", "c_ecom03_pricehike", "c_ecom03_cancel", "c_ecom03_modify"]
+  },
+  {
+    "id": "RANK_FIN_04",
+    "policyType": "FinTech Digital Wallet",
+    "description": "Consumer micro-investing and peer-to-peer payment application terms.",
+    "rationale": "Privacy-sensitive banking customer (PRIVACY_DATA_SHARING=5, DATA_RETENTION=5) prioritizes credit bureau reporting, data brokering, and perpetual retention over arbitration.",
+    "userPreferences": {
+      "PRIVACY_DATA_SHARING": 5,
+      "DATA_RETENTION": 5,
+      "ARBITRATION": 2,
+      "AUTO_RENEWAL": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_fin04_broker",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Sale and Sharing of Financial Profile Data",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "We share your transactional history, account balances, and credit scores with third-party underwriting brokers and advertising affiliates."
+      },
+      {
+        "clauseId": "c_fin04_retention",
+        "categoryId": "DATA_RETENTION",
+        "title": "Perpetual Financial Transaction Archival",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "User transaction records, linked bank numbers, and identity verification logs are retained perpetually regardless of account closure."
+      },
+      {
+        "clauseId": "c_fin04_telemetry",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Cross-Device Financial Telemetry Gathering",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "Our SDK collects GPS coordinates, keystroke timings, and peripheral device metadata during transaction authorization."
+      },
+      {
+        "clauseId": "c_fin04_affiliate",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Targeted Lending Affiliate Promotions",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "Your spending habits will be analyzed to allow third-party personal loan vendors to pitch high-yield financial products."
+      },
+      {
+        "clauseId": "c_fin04_shred",
+        "categoryId": "DATA_RETENTION",
+        "title": "Exemption from GDPR Deletion Demands",
+        "severity": "MEDIUM",
+        "confidence": 0.86,
+        "evidence": "Right-to-be-forgotten requests will not apply to transaction histories, compliance hashes, and behavioral risk profiles."
+      },
+      {
+        "clauseId": "c_fin04_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Mandatory Banking Arbitration",
+        "severity": "HIGH",
+        "confidence": 0.89,
+        "evidence": "Any fee dispute must be brought before an individual arbitrator with cost-splitting obligations."
+      },
+      {
+        "clauseId": "c_fin04_fee",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Dormancy Maintenance Charge",
+        "severity": "LOW",
+        "confidence": 0.80,
+        "evidence": "Inactive accounts with a non-zero balance will be billed a $3 monthly ledger maintenance fee."
+      }
+    ],
+    "groundTruthRelevant": ["c_fin04_broker", "c_fin04_retention", "c_fin04_telemetry", "c_fin04_affiliate", "c_fin04_shred"]
+  },
+  {
+    "id": "RANK_CLOUD_05",
+    "policyType": "Cloud Storage & Backup",
+    "description": "Secure file storage platform terms with disclaimers of data integrity and unilateral changes.",
+    "rationale": "Enterprise IT customer with LIABILITY_LIMITATION=5 and WARRANTY_DISCLAIMER=5 prioritizes data loss disclaimers and total liability waivers over minor billing rules.",
+    "userPreferences": {
+      "LIABILITY_LIMITATION": 5,
+      "WARRANTY_DISCLAIMER": 5,
+      "ARBITRATION": 2,
+      "AUTO_RENEWAL": 2
+    },
+    "findings": [
+      {
+        "clauseId": "c_cld05_dataloss",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Total Disclaimer of Liability for Lost Customer Files",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "Under no circumstances shall company be liable for any deletion, corruption, failure to store, or ransomware destruction of user files."
+      },
+      {
+        "clauseId": "c_cld05_asis",
+        "categoryId": "WARRANTY_DISCLAIMER",
+        "title": "As-Is Storage Service Without Uptime Commitments",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "The storage services are provided strictly as-is and as-available, with all express or implied warranties of fitness disclaimed."
+      },
+      {
+        "clauseId": "c_cld05_cap",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "$50 Maximum Monetary Recovery Cap",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "In the event of total server outage or permanent data erasure, our aggregate liability shall not exceed fifty dollars ($50.00)."
+      },
+      {
+        "clauseId": "c_cld05_indemn",
+        "categoryId": "INDEMNIFICATION",
+        "title": "Broad User Indemnification Burden",
+        "severity": "HIGH",
+        "confidence": 0.89,
+        "evidence": "You agree to defend and hold company harmless from any third-party claims, subpoenas, or legal costs arising from stored content."
+      },
+      {
+        "clauseId": "c_cld05_interupt",
+        "categoryId": "WARRANTY_DISCLAIMER",
+        "title": "Unannounced Infrastructure Outages",
+        "severity": "MEDIUM",
+        "confidence": 0.85,
+        "evidence": "We do not warrant uninterrupted, error-free, or virus-free data transmission to our distributed node clusters."
+      },
+      {
+        "clauseId": "c_cld05_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Standard Commercial Arbitration",
+        "severity": "MEDIUM",
+        "confidence": 0.82,
+        "evidence": "Contract disputes will be settled through fast-track arbitration under AAA commercial rules."
+      },
+      {
+        "clauseId": "c_cld05_renew",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Annual Quota Auto-Renewal",
+        "severity": "LOW",
+        "confidence": 0.77,
+        "evidence": "Storage tiers automatically renew at the expiration of each 12-month service term."
+      }
+    ],
+    "groundTruthRelevant": ["c_cld05_dataloss", "c_cld05_asis", "c_cld05_cap", "c_cld05_indemn", "c_cld05_interupt"]
+  },
+  {
+    "id": "RANK_PROD_06",
+    "policyType": "Productivity AI Writing Assistant",
+    "description": "Browser extension and cloud text generative copilot agreement.",
+    "rationale": "Privacy and Content-focused user with PRIVACY_DATA_SHARING=5 and USER_CONTENT_RIGHTS=5 expects model training on user text and telemetry sharing to rank at the top.",
+    "userPreferences": {
+      "PRIVACY_DATA_SHARING": 5,
+      "USER_CONTENT_RIGHTS": 5,
+      "ARBITRATION": 1,
+      "AUTO_RENEWAL": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_prd06_train",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Mandatory Model Training on User Drafts",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "You grant company the perpetual right to ingest, index, and use all entered text, keystrokes, and confidential drafts to train future machine learning models."
+      },
+      {
+        "clauseId": "c_prd06_snoop",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Real-Time Screen and Clipboard Telemetry",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "The desktop companion app continuously monitors system clipboard contents and active browser window titles to provide contextual grammar suggestions."
+      },
+      {
+        "clauseId": "c_prd06_share",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Third-Party LLM Provider Data Forwarding",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "All prompt inputs and text selections are forwarded to third-party offshore AI inference APIs for completion processing."
+      },
+      {
+        "clauseId": "c_prd06_ipout",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Company Ownership of Synthesized Output",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "While you own raw prompts, company retains co-ownership of all AI-synthesized outputs, completions, and derivative summaries."
+      },
+      {
+        "clauseId": "c_prd06_log",
+        "categoryId": "DATA_RETENTION",
+        "title": "Indefinite Server Logging of Keystroke Sequences",
+        "severity": "MEDIUM",
+        "confidence": 0.86,
+        "evidence": "Raw document editing timelines and keystroke delta logs are preserved in perpetuity for quality assurance."
+      },
+      {
+        "clauseId": "c_prd06_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Class Action Waiver and Arbitration",
+        "severity": "HIGH",
+        "confidence": 0.89,
+        "evidence": "All disputes shall be resolved in individual arbitration and you waive any class suit rights."
+      },
+      {
+        "clauseId": "c_prd06_bill",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Recurring Monthly Premium Charge",
+        "severity": "LOW",
+        "confidence": 0.78,
+        "evidence": "Pro tiers are charged automatically each month to your default credit card."
+      }
+    ],
+    "groundTruthRelevant": ["c_prd06_train", "c_prd06_snoop", "c_prd06_share", "c_prd06_ipout", "c_prd06_log"]
+  },
+  {
+    "id": "RANK_STREAM_07",
+    "policyType": "Streaming Video Platform",
+    "description": "On-demand entertainment streaming terms with account-sharing bans and price revision rights.",
+    "rationale": "Billing-conscious streamer (AUTO_RENEWAL=5, UNILATERAL_CHANGE=5) prioritizes immediate rate changes, automatic renewals, and household tracking bans.",
+    "userPreferences": {
+      "AUTO_RENEWAL": 5,
+      "UNILATERAL_CHANGE": 5,
+      "ARBITRATION": 1,
+      "USER_CONTENT_RIGHTS": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_stm07_escalate",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Unilateral Subscription Price Escalation",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "evidence": "We may increase subscription fees at our discretion; continued viewing following the billing date constitutes acceptance of the new price."
+      },
+      {
+        "clauseId": "c_stm07_autorenew",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Perpetual Auto-Renewing Monthly Billings",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "Your subscription continues month-to-month until canceled, and monthly charges recur automatically on your billing cycle."
+      },
+      {
+        "clauseId": "c_stm07_household",
+        "categoryId": "ACCOUNT_SUSPENSION",
+        "title": "Household Location Geofencing Enforcement",
+        "severity": "HIGH",
+        "confidence": 0.90,
+        "evidence": "Accounts accessing streams outside the designated primary residence IP address will incur extra member fees or instant termination."
+      },
+      {
+        "clauseId": "c_stm07_contentpull",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Immediate Removal of Licensed Content Catalog",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "Titles, features, and resolution tiers may be altered, replaced, or removed from the service without rebate or credit."
+      },
+      {
+        "clauseId": "c_stm07_refund",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Zero Pro-Rata Refunds for Mid-Cycle Cancellations",
+        "severity": "MEDIUM",
+        "confidence": 0.87,
+        "evidence": "Payments are non-refundable and there are no refunds or credits for partially used membership months."
+      },
+      {
+        "clauseId": "c_stm07_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Binding Arbitration Agreement",
+        "severity": "HIGH",
+        "confidence": 0.89,
+        "evidence": "You and streaming company agree that all disputes will be resolved exclusively through individual arbitration."
+      },
+      {
+        "clauseId": "c_stm07_telemetry",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Viewing Habit Analytics Disclosure",
+        "severity": "LOW",
+        "confidence": 0.79,
+        "evidence": "Aggregated title viewing durations are disclosed to content distribution partners."
+      }
+    ],
+    "groundTruthRelevant": ["c_stm07_escalate", "c_stm07_autorenew", "c_stm07_household", "c_stm07_contentpull", "c_stm07_refund"]
+  },
+  {
+    "id": "RANK_MKT_08",
+    "policyType": "Freelance Marketplace",
+    "description": "Peer-to-peer freelance contract and payment processing agreement.",
+    "rationale": "Arbitration and liability-conscious freelancer with ARBITRATION=5 and INDEMNIFICATION=5 prioritizes mandatory dispute resolution and defense indemnities.",
+    "userPreferences": {
+      "ARBITRATION": 5,
+      "INDEMNIFICATION": 5,
+      "AUTO_RENEWAL": 1,
+      "PRIVACY_DATA_SHARING": 2
+    },
+    "findings": [
+      {
+        "clauseId": "c_mkt08_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Pre-Dispute Mandatory Binding Arbitration",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "All disagreements regarding completed milestone deliverables and fee disbursements must be adjudicated through private binding arbitration."
+      },
+      {
+        "clauseId": "c_mkt08_indemn",
+        "categoryId": "INDEMNIFICATION",
+        "title": "Full Freelancer Indemnification of Marketplace",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "You shall indemnify, hold harmless, and defend marketplace and its directors against all third-party copyright, tax, or contract claims."
+      },
+      {
+        "clauseId": "c_mkt08_class",
+        "categoryId": "ARBITRATION",
+        "title": "Waiver of Consolidated and Class Action Suits",
+        "severity": "HIGH",
+        "confidence": 0.92,
+        "evidence": "You may only bring disputes against the platform in your individual capacity, never as part of any collective or class action."
+      },
+      {
+        "clauseId": "c_mkt08_costs",
+        "categoryId": "ARBITRATION",
+        "title": "One-Way Attorney Fee Shifting to User",
+        "severity": "MEDIUM",
+        "confidence": 0.89,
+        "evidence": "If you challenge any arbitration ruling in court unsuccessfully, you must pay all of platform's legal costs and attorney fees."
+      },
+      {
+        "clauseId": "c_mkt08_noncirc",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Non-Circumvention Penalties and Fee Hold",
+        "severity": "HIGH",
+        "confidence": 0.90,
+        "evidence": "Direct off-platform client payments trigger immediate 24-month account suspension and a $5,000 conversion fee penalty."
+      },
+      {
+        "clauseId": "c_mkt08_data",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Public Profile Rating Visibility",
+        "severity": "LOW",
+        "confidence": 0.81,
+        "evidence": "Earnings histories and client reviews are rendered visible to all registered enterprise accounts."
+      },
+      {
+        "clauseId": "c_mkt08_renew",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Monthly Connects Token Subscription",
+        "severity": "LOW",
+        "confidence": 0.77,
+        "evidence": "Job proposal tokens replenish automatically every month via recurring credit card authorization."
+      }
+    ],
+    "groundTruthRelevant": ["c_mkt08_arb", "c_mkt08_indemn", "c_mkt08_class", "c_mkt08_costs", "c_mkt08_noncirc"]
+  },
+  {
+    "id": "RANK_HLTH_09",
+    "policyType": "Connected Health & Wearable",
+    "description": "Smart health monitor and fitness tracker telemetry terms.",
+    "rationale": "Medical privacy-sensitive user with PRIVACY_DATA_SHARING=5 and DATA_RETENTION=5 expects health data brokering and insurer sharing to dominate top ranks.",
+    "userPreferences": {
+      "PRIVACY_DATA_SHARING": 5,
+      "DATA_RETENTION": 5,
+      "ARBITRATION": 1,
+      "AUTO_RENEWAL": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_hlt09_insure",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Commercial Sharing of Biometric Health Telemetry with Insurers",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "evidence": "We disclose aggregated heart-rate, sleep quality, and blood-oxygen trends to commercial life and medical insurance underwriting partners."
+      },
+      {
+        "clauseId": "c_hlt09_broker",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "De-Identified Medical Telemetry Licensing to Pharma",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "evidence": "We monetize de-identified physiological datasets by licensing longitudinal health metrics to pharmaceutical researchers."
+      },
+      {
+        "clauseId": "c_hlt09_retention",
+        "categoryId": "DATA_RETENTION",
+        "title": "Indefinite Archival of Biometric Baselines",
+        "severity": "HIGH",
+        "confidence": 0.92,
+        "evidence": "ECG wave traces, historical heart rates, and sleep architecture logs are archived permanently across our global cloud storage."
+      },
+      {
+        "clauseId": "c_hlt09_gps",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Background GPS Tracking During Exercise",
+        "severity": "MEDIUM",
+        "confidence": 0.89,
+        "evidence": "The companion application continuously records background geographical location even when fitness recording is paused."
+      },
+      {
+        "clauseId": "c_hlt09_shred",
+        "categoryId": "DATA_RETENTION",
+        "title": "Refusal to Delete Cloud Machine Learning Weights",
+        "severity": "MEDIUM",
+        "confidence": 0.87,
+        "evidence": "Biometric feature vectors extracted from your device remain embedded in our trained diagnostic models post-deletion."
+      },
+      {
+        "clauseId": "c_hlt09_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Binding Arbitration of Accuracy Claims",
+        "severity": "HIGH",
+        "confidence": 0.88,
+        "evidence": "All sensor defect claims are subject to individual AAA arbitration."
+      },
+      {
+        "clauseId": "c_hlt09_warranty",
+        "categoryId": "WARRANTY_DISCLAIMER",
+        "title": "Not a Medical Device Disclaimer",
+        "severity": "LOW",
+        "confidence": 0.82,
+        "evidence": "Device sensor readings are for informational wellness purposes only and must not be used for diagnosis."
+      }
+    ],
+    "groundTruthRelevant": ["c_hlt09_insure", "c_hlt09_broker", "c_hlt09_retention", "c_hlt09_gps", "c_hlt09_shred"]
+  },
+  {
+    "id": "RANK_GAME_10",
+    "policyType": "Online Gaming Network",
+    "description": "Multiplayer gaming client and virtual in-game item marketplace.",
+    "rationale": "Digital asset investor (USER_CONTENT_RIGHTS=5, UNILATERAL_CHANGE=5) prioritizes arbitrary item revocation, virtual property disclaimers, and unilateral bans.",
+    "userPreferences": {
+      "USER_CONTENT_RIGHTS": 5,
+      "UNILATERAL_CHANGE": 5,
+      "ARBITRATION": 1,
+      "AUTO_RENEWAL": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_gam10_noown",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Zero Ownership Right in Purchased Virtual Items",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "You acknowledge and agree that virtual goods, cosmetics, and currencies represent a revocable personal license and carry zero real-world value or ownership."
+      },
+      {
+        "clauseId": "c_gam10_wipe",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Unilateral Elimination of In-Game Assets",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "We reserve the absolute right to modify, balance, extinguish, or sunset in-game virtual assets and balance counts without refund or compensation."
+      },
+      {
+        "clauseId": "c_gam10_sunset",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Discretionary Game Server Shutdown Without Rebate",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "Company may terminate online server support and game functionality with 30 days notice without providing any credit for unspent currencies."
+      },
+      {
+        "clauseId": "c_gam10_mods",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Immediate Transfer of User-Created Mods to Studio",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "All user-generated maps, custom skins, and game modifications automatically become the exclusive proprietary property of the studio."
+      },
+      {
+        "clauseId": "c_gam10_ban",
+        "categoryId": "ACCOUNT_SUSPENSION",
+        "title": "Instant Non-Appealable Account Ban and Asset Forfeiture",
+        "severity": "HIGH",
+        "confidence": 0.89,
+        "evidence": "Detection of unauthorized background tools leads to immediate permanent hardware ban and complete forfeiture of all account contents."
+      },
+      {
+        "clauseId": "c_gam10_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Arbitration of Digital Storefront Transactions",
+        "severity": "MEDIUM",
+        "confidence": 0.83,
+        "evidence": "Store checkout disputes are subject to binding individual arbitration in Seattle, Washington."
+      },
+      {
+        "clauseId": "c_gam10_chat",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Voice Chat Audio Recording",
+        "severity": "LOW",
+        "confidence": 0.79,
+        "evidence": "In-game voice audio may be recorded and stored for moderation and toxicity enforcement."
+      }
+    ],
+    "groundTruthRelevant": ["c_gam10_noown", "c_gam10_wipe", "c_gam10_sunset", "c_gam10_mods", "c_gam10_ban"]
+  },
+  {
+    "id": "RANK_TRAVEL_11",
+    "policyType": "Travel & Lodging Booking",
+    "description": "Vacation rental and accommodation booking intermediary terms.",
+    "rationale": "Liability and cancellation-focused traveler with LIABILITY_LIMITATION=5 and AUTO_RENEWAL=4 prioritizes travel booking disclaimers, cancellation fee forfeiture, and host liability exclusion.",
+    "userPreferences": {
+      "LIABILITY_LIMITATION": 5,
+      "AUTO_RENEWAL": 4,
+      "ARBITRATION": 1,
+      "USER_CONTENT_RIGHTS": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_trv11_hostliab",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Total Disclaimer of Host Misrepresentation Liability",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "We act strictly as a passive broker and assume no liability for unsafe property conditions, cancellations, fraudulent listings, or personal injury."
+      },
+      {
+        "clauseId": "c_trv11_cap",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Strict Recovery Cap Limited to Service Commission",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "In no event shall platform liability for ruined travel or property hazards exceed the platform service fee retained from your reservation."
+      },
+      {
+        "clauseId": "c_trv11_cancel",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Non-Refundable Platform Convenience Surcharges",
+        "severity": "HIGH",
+        "confidence": 0.90,
+        "evidence": "Platform administrative charges and processing surcharges remain strictly non-refundable even when a host cancels the booking."
+      },
+      {
+        "clauseId": "c_trv11_rebook",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "No Guarantee of Emergency Rebooking Assistance",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "If a host locks out a guest upon arrival, company has no obligation to procure comparable replacement accommodations."
+      },
+      {
+        "clauseId": "c_trv11_penalty",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Automatic Damage Charge Deductions from Card",
+        "severity": "MEDIUM",
+        "confidence": 0.86,
+        "evidence": "Host-reported property damage claims will be charged automatically to your payment method without prior arbitral review."
+      },
+      {
+        "clauseId": "c_trv11_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Individual Arbitration Clause",
+        "severity": "MEDIUM",
+        "confidence": 0.84,
+        "evidence": "Disputes regarding booking charges must be resolved through binding individual arbitration."
+      },
+      {
+        "clauseId": "c_trv11_passport",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Government Passport ID Verification Transfer",
+        "severity": "LOW",
+        "confidence": 0.80,
+        "evidence": "National identity documents are forwarded to third-party anti-fraud verification providers."
+      }
+    ],
+    "groundTruthRelevant": ["c_trv11_hostliab", "c_trv11_cap", "c_trv11_cancel", "c_trv11_rebook", "c_trv11_penalty"]
+  },
+  {
+    "id": "RANK_AI_12",
+    "policyType": "Generative AI Platform",
+    "description": "Hosted LLM inference API and chat playground terms of service.",
+    "rationale": "Developer user with USER_CONTENT_RIGHTS=5 and LIABILITY_LIMITATION=5 prioritizes model weights licensing, prompt IP claims, and API liability disclaimers.",
+    "userPreferences": {
+      "USER_CONTENT_RIGHTS": 5,
+      "LIABILITY_LIMITATION": 5,
+      "ARBITRATION": 2,
+      "PRIVACY_DATA_SHARING": 2
+    },
+    "findings": [
+      {
+        "clauseId": "c_ai12_promptip",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Broad License to User Prompts and Code Submissions",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "evidence": "You grant us an irrevocable, perpetual, royalty-free license to use all submitted prompts, code snippets, and fine-tuning datasets for proprietary model development."
+      },
+      {
+        "clauseId": "c_ai12_output",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "No Guarantee of Exclusive Rights to Output",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "Due to the probabilistic nature of AI, similar outputs may be generated for multiple users, and company grants no exclusive copyright to completions."
+      },
+      {
+        "clauseId": "c_ai12_halluc",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Zero Liability for AI Hallucinations or Flawed Code",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "Company disclaims all liability for downstream production outages, vulnerabilities, or legal copyright infringement arising from generated code."
+      },
+      {
+        "clauseId": "c_ai12_apicap",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Monetary Recovery Limited to Past Month API Spend",
+        "severity": "HIGH",
+        "confidence": 0.90,
+        "evidence": "Total liability for enterprise API token latency or catastrophic model failure is capped strictly at your last monthly bill."
+      },
+      {
+        "clauseId": "c_ai12_indemn",
+        "categoryId": "INDEMNIFICATION",
+        "title": "User Indemnification of AI Copyright Infringement",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "You agree to indemnify company against all claims alleging that your model prompts induced copyright infringement in generated outputs."
+      },
+      {
+        "clauseId": "c_ai12_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Commercial Arbitration Provision",
+        "severity": "MEDIUM",
+        "confidence": 0.84,
+        "evidence": "All API billing disputes shall be submitted to binding arbitration in San Francisco."
+      },
+      {
+        "clauseId": "c_ai12_telemetry",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Prompt Token Telemetry Logging",
+        "severity": "LOW",
+        "confidence": 0.79,
+        "evidence": "Token throughput counts and latency metrics are collected for cloud telemetry monitoring."
+      }
+    ],
+    "groundTruthRelevant": ["c_ai12_promptip", "c_ai12_output", "c_ai12_halluc", "c_ai12_apicap", "c_ai12_indemn"]
+  },
+  {
+    "id": "RANK_EDTECH_13",
+    "policyType": "Online Education Platform",
+    "description": "Digital learning and certification platform terms with recurring tuition auto-billing.",
+    "rationale": "Student user with AUTO_RENEWAL=5 and PRIVACY_DATA_SHARING=4 prioritizes auto-renewal traps, certificate withholding, and proctoring surveillance.",
+    "userPreferences": {
+      "AUTO_RENEWAL": 5,
+      "PRIVACY_DATA_SHARING": 4,
+      "ARBITRATION": 1,
+      "USER_CONTENT_RIGHTS": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_edt13_autorenew",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Annual Course Library Subscription Auto-Renewal",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "Course access passes renew automatically every 12 months at the standard rate unless canceled 14 days before expiration."
+      },
+      {
+        "clauseId": "c_edt13_norefund",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Non-Refundable Tuition Fees Post-Coursework Launch",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "Launching even a single lecture module waives any statutory 14-day cooling off period and renders tuition 100% non-refundable."
+      },
+      {
+        "clauseId": "c_edt13_proctor",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "AI Proctoring Eye-Tracking and Biometric Surveillance",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "Online exam certification requires webcam eye-tracking, room panoramic scanning, and algorithmic facial presence verification."
+      },
+      {
+        "clauseId": "c_edt13_employer",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Disclosure of Exam Grades to Corporate Partners",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "Assessment performance metrics and completion pace records are marketed to prospective recruiting partners."
+      },
+      {
+        "clauseId": "c_edt13_withhold",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Discretionary Certificate Withholding",
+        "severity": "MEDIUM",
+        "confidence": 0.86,
+        "evidence": "We reserve the right to revoke, invalidate, or withhold completion certificates for unstated honor code reviews."
+      },
+      {
+        "clauseId": "c_edt13_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Educational Contract Arbitration",
+        "severity": "MEDIUM",
+        "confidence": 0.83,
+        "evidence": "Disputes regarding academic credentials must be heard through arbitration."
+      },
+      {
+        "clauseId": "c_edt13_forum",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Forum Assignment Submission License",
+        "severity": "LOW",
+        "confidence": 0.78,
+        "evidence": "Homework essays posted to discussion boards may be displayed as student exemplars."
+      }
+    ],
+    "groundTruthRelevant": ["c_edt13_autorenew", "c_edt13_norefund", "c_edt13_proctor", "c_edt13_employer", "c_edt13_withhold"]
+  },
+  {
+    "id": "RANK_RIDE_14",
+    "policyType": "Ride-Hailing & Delivery",
+    "description": "On-demand urban mobility and delivery application terms.",
+    "rationale": "Arbitration-sensitive passenger (ARBITRATION=5, CLASS_ACTION=5) prioritizes mandatory accident arbitration, jury waivers, and short notice limitations.",
+    "userPreferences": {
+      "ARBITRATION": 5,
+      "LIABILITY_LIMITATION": 3,
+      "AUTO_RENEWAL": 2,
+      "PRIVACY_DATA_SHARING": 2
+    },
+    "findings": [
+      {
+        "clauseId": "c_rid14_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Mandatory Arbitration Covering Personal Injury and Transit Claims",
+        "severity": "HIGH",
+        "confidence": 0.97,
+        "evidence": "You agree that all claims, including motor vehicle collisions, assaults, or driver misconduct, shall be settled solely by confidential individual arbitration."
+      },
+      {
+        "clauseId": "c_rid14_caw",
+        "categoryId": "ARBITRATION",
+        "title": "Comprehensive Class Action Ban",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "No passenger or driver may join, consolidate, or coordinate claims in any representative or class action against platform."
+      },
+      {
+        "clauseId": "c_rid14_jury",
+        "categoryId": "ARBITRATION",
+        "title": "Express Jury Trial Waiver",
+        "severity": "MEDIUM",
+        "confidence": 0.91,
+        "evidence": "The parties intentionally and irrevocably waive any constitutional right to trial before a jury."
+      },
+      {
+        "clauseId": "c_rid14_limit",
+        "categoryId": "ARBITRATION",
+        "title": "Strict One-Year Statute of Limitations for Notice",
+        "severity": "MEDIUM",
+        "confidence": 0.89,
+        "evidence": "Any arbitration demand must be formally filed within one (1) year of the trip date or be forever barred."
+      },
+      {
+        "clauseId": "c_rid14_broker",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Platform Broker Immunity for Independent Drivers",
+        "severity": "HIGH",
+        "confidence": 0.92,
+        "evidence": "Platform does not provide transportation services and disclaims all liability for driver negligence, safety, or criminal background."
+      },
+      {
+        "clauseId": "c_rid14_gps",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Continuous Precise Geolocation Recording",
+        "severity": "LOW",
+        "confidence": 0.80,
+        "evidence": "Trip GPS coordinates and travel speed telemetry are recorded throughout transit."
+      },
+      {
+        "clauseId": "c_rid14_pass",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Monthly Commuter Ride Pass Renewal",
+        "severity": "LOW",
+        "confidence": 0.77,
+        "evidence": "Ride-discount monthly passes renew on the 15th of each month."
+      }
+    ],
+    "groundTruthRelevant": ["c_rid14_arb", "c_rid14_caw", "c_rid14_jury", "c_rid14_limit", "c_rid14_broker"]
+  },
+  {
+    "id": "RANK_VPN_15",
+    "policyType": "Consumer VPN Service",
+    "description": "Privacy VPN and encrypted proxy service agreement.",
+    "rationale": "High-privacy user with PRIVACY_DATA_SHARING=5 and DATA_RETENTION=5 targets connection logging, third-party hosting, and unannounced log disclosures.",
+    "userPreferences": {
+      "PRIVACY_DATA_SHARING": 5,
+      "DATA_RETENTION": 5,
+      "ARBITRATION": 1,
+      "AUTO_RENEWAL": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_vpn15_log",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Diagnostic Connection and Bandwidth Logging",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "While we do not log browsed URLs, we maintain timestamps, originating IP addresses, and bandwidth quantities on centralized servers."
+      },
+      {
+        "clauseId": "c_vpn15_surrender",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Unannounced Data Surrender to Foreign Authorities",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "We disclose collected connection metadata to law enforcement agencies upon receipt of informal inquiries without notifying you."
+      },
+      {
+        "clauseId": "c_vpn15_retention",
+        "categoryId": "DATA_RETENTION",
+        "title": "90-Day Ephemeral Log Retention Window",
+        "severity": "HIGH",
+        "confidence": 0.90,
+        "evidence": "Session connection records are stored for 90 days to defend network infrastructure against distributed denial-of-service abuse."
+      },
+      {
+        "clauseId": "c_vpn15_affiliate",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Installation Analytics Sharing with Ad Networks",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "Mobile client install referrers and advertising IDs are shared with third-party acquisition attribution partners."
+      },
+      {
+        "clauseId": "c_vpn15_shred",
+        "categoryId": "DATA_RETENTION",
+        "title": "Permanent Backups of Account Ledger Logs",
+        "severity": "MEDIUM",
+        "confidence": 0.86,
+        "evidence": "User subscription payment hashes and registration email addresses are maintained permanently in cold storage."
+      },
+      {
+        "clauseId": "c_vpn15_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Offshore Arbitration in Seychelles",
+        "severity": "HIGH",
+        "confidence": 0.89,
+        "evidence": "All legal actions must be commenced exclusively in the Republic of Seychelles through individual arbitration."
+      },
+      {
+        "clauseId": "c_vpn15_auto",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Two-Year Plan Automatic Billing",
+        "severity": "LOW",
+        "confidence": 0.78,
+        "evidence": "Multi-year subscriptions renew automatically for equal duration at standard retail pricing."
+      }
+    ],
+    "groundTruthRelevant": ["c_vpn15_log", "c_vpn15_surrender", "c_vpn15_retention", "c_vpn15_affiliate", "c_vpn15_shred"]
+  },
+  {
+    "id": "RANK_DATING_16",
+    "policyType": "Dating Application",
+    "description": "Mobile matchmaking and geolocation social service terms.",
+    "rationale": "Privacy and Content-sensitive user with PRIVACY_DATA_SHARING=5 and USER_CONTENT_RIGHTS=5 prioritizes location broadcasting, photo rights, and ad targeting.",
+    "userPreferences": {
+      "PRIVACY_DATA_SHARING": 5,
+      "USER_CONTENT_RIGHTS": 5,
+      "AUTO_RENEWAL": 2,
+      "ARBITRATION": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_dat16_adphoto",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Global Right to Use Profile Photos in Public Marketing",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "You grant us the perpetual right to display your profile photos, age, and bio in outdoor billboards and online advertising campaigns worldwide."
+      },
+      {
+        "clauseId": "c_dat16_location",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Precise Real-Time Geolocation Tracking and Sharing",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "We collect and transmit your precise latitude and longitude coordinates to ad networks to deliver localized promotional offers."
+      },
+      {
+        "clauseId": "c_dat16_license",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Irrevocable Commercial Content License",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "You grant platform a worldwide, transferable, sublicensable license to host, store, copy, and commercialize all uploaded photos."
+      },
+      {
+        "clauseId": "c_dat16_messages",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Algorithmic Scanning of Private Chats",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "Private direct messages are scanned automatically by internal text analyzers for policy enforcement and ad sentiment classification."
+      },
+      {
+        "clauseId": "c_dat16_retention",
+        "categoryId": "DATA_RETENTION",
+        "title": "Extended Retention of Deleted Profile Content",
+        "severity": "MEDIUM",
+        "confidence": 0.86,
+        "evidence": "Profile photographs and chat logs remain cached across global content delivery networks for up to 180 days following account deletion."
+      },
+      {
+        "clauseId": "c_dat16_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Mandatory Arbitration Clause",
+        "severity": "HIGH",
+        "confidence": 0.89,
+        "evidence": "Claims arising from interactions with other users are subject to individual binding arbitration."
+      },
+      {
+        "clauseId": "c_dat16_boost",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Weekly Super-Like Auto-Renewing Subscriptions",
+        "severity": "LOW",
+        "confidence": 0.79,
+        "evidence": "Spotlight boost passes automatically renew on a weekly billing schedule."
+      }
+    ],
+    "groundTruthRelevant": ["c_dat16_adphoto", "c_dat16_location", "c_dat16_license", "c_dat16_messages", "c_dat16_retention"]
+  },
+  {
+    "id": "RANK_IOT_17",
+    "policyType": "Smart Home IoT Hardware",
+    "description": "Connected smart speaker and home camera ecosystem terms.",
+    "rationale": "Security and Warranty-sensitive homeowner with WARRANTY_DISCLAIMER=5 and LIABILITY_LIMITATION=5 targets security flaw disclaimers and emergency outage waivers.",
+    "userPreferences": {
+      "WARRANTY_DISCLAIMER": 5,
+      "LIABILITY_LIMITATION": 5,
+      "PRIVACY_DATA_SHARING": 2,
+      "AUTO_RENEWAL": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_iot17_security",
+        "categoryId": "WARRANTY_DISCLAIMER",
+        "title": "Disclaimer of Security Flaw and Hacking Protection",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "We do not warrant that smart camera streams are immune from unauthorized interception, firmware exploits, or cyberattacks."
+      },
+      {
+        "clauseId": "c_iot17_emerg",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Zero Liability for Failed Emergency Dispatch Alerts",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "evidence": "Under no circumstances shall company be liable if fire, smoke, or intrusion alerts fail to transmit during a residential emergency."
+      },
+      {
+        "clauseId": "c_iot17_limit",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Liability Restricted to Hardware Purchase Price",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "Total liability for household property damage or burglaries is strictly capped at the purchase price paid for the single smart sensor."
+      },
+      {
+        "clauseId": "c_iot17_asis",
+        "categoryId": "WARRANTY_DISCLAIMER",
+        "title": "As-Is Cloud Server Availability",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "Video cloud recording is provided without uptime warranties; server latency may delay notifications by several minutes."
+      },
+      {
+        "clauseId": "c_iot17_sunset",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Unilateral Discontinuation of Firmware Support",
+        "severity": "HIGH",
+        "confidence": 0.90,
+        "evidence": "Company may brick older hardware generations by discontinuing cloud authentication servers with 60 days notice."
+      },
+      {
+        "clauseId": "c_iot17_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Hardware Arbitration Requirement",
+        "severity": "MEDIUM",
+        "confidence": 0.83,
+        "evidence": "Disputes relating to hardware warranties must be arbitrated in Dallas, Texas."
+      },
+      {
+        "clauseId": "c_iot17_audio",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Audio Snippet Quality Review",
+        "severity": "LOW",
+        "confidence": 0.79,
+        "evidence": "De-identified microphone command snippets are audited by human annotators."
+      }
+    ],
+    "groundTruthRelevant": ["c_iot17_security", "c_iot17_emerg", "c_iot17_limit", "c_iot17_asis", "c_iot17_sunset"]
+  },
+  {
+    "id": "RANK_NEWS_18",
+    "policyType": "Digital News & Journalism",
+    "description": "Daily digital newspaper and editorial paywall terms.",
+    "rationale": "Subscriber with AUTO_RENEWAL=5 and UNILATERAL_CHANGE=4 prioritizes recurring billing traps, promotional step-up pricing, and phone-only cancellation rules.",
+    "userPreferences": {
+      "AUTO_RENEWAL": 5,
+      "UNILATERAL_CHANGE": 4,
+      "ARBITRATION": 1,
+      "USER_CONTENT_RIGHTS": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_nws18_stepup",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Steep Promotional Price Step-Up Auto-Billing",
+        "severity": "HIGH",
+        "confidence": 0.95,
+        "evidence": "After your initial $1 trial month, your digital subscription automatically renews at the regular non-discounted rate of $49.99 per month."
+      },
+      {
+        "clauseId": "c_nws18_callcancel",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Mandatory Phone-Only Cancellation Requirement",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "Digital subscriptions cannot be canceled online; you must call our telephone retention center during eastern business hours."
+      },
+      {
+        "clauseId": "c_nws18_norefund",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Non-Refundable Monthly Charges",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "Billing is processed in advance; no pro-rata refunds are issued for mid-month cancellation requests."
+      },
+      {
+        "clauseId": "c_nws18_unilateral",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Right to Adjust Paywall Quotas and Pricing",
+        "severity": "MEDIUM",
+        "confidence": 0.88,
+        "evidence": "We reserve the right to increase digital rates or reduce allowed monthly article views upon electronic notice."
+      },
+      {
+        "clauseId": "c_nws18_bundled",
+        "categoryId": "UNILATERAL_CHANGE",
+        "title": "Inclusion of Unwanted Surcharge Add-Ons",
+        "severity": "MEDIUM",
+        "confidence": 0.85,
+        "evidence": "Special print edition supplements and archive fees may be charged automatically to your recurring bill."
+      },
+      {
+        "clauseId": "c_nws18_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Arbitration of Subscription Billing Disputes",
+        "severity": "MEDIUM",
+        "confidence": 0.82,
+        "evidence": "All billing disputes are subject to binding arbitration under AAA consumer rules."
+      },
+      {
+        "clauseId": "c_nws18_letter",
+        "categoryId": "USER_CONTENT_RIGHTS",
+        "title": "Letters to Editor Sublicensing",
+        "severity": "LOW",
+        "confidence": 0.77,
+        "evidence": "Reader feedback submitted to editorial staff may be published across syndicated print syndicates."
+      }
+    ],
+    "groundTruthRelevant": ["c_nws18_stepup", "c_nws18_callcancel", "c_nws18_norefund", "c_nws18_unilateral", "c_nws18_bundled"]
+  },
+  {
+    "id": "RANK_CRYPTO_19",
+    "policyType": "Cryptocurrency Exchange",
+    "description": "Digital asset custody and spot trading platform agreement.",
+    "rationale": "Crypto trader with ARBITRATION=5 and LIABILITY_LIMITATION=5 prioritizes forced arbitration, freezing assets without recourse, and zero loss recovery.",
+    "userPreferences": {
+      "ARBITRATION": 5,
+      "LIABILITY_LIMITATION": 5,
+      "PRIVACY_DATA_SHARING": 2,
+      "AUTO_RENEWAL": 1
+    },
+    "findings": [
+      {
+        "clauseId": "c_crp19_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Mandatory International Arbitration in Singapore",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "evidence": "All trading, custody, and liquidation disputes shall be referred to and finally resolved by arbitration administered by SIAC in Singapore."
+      },
+      {
+        "clauseId": "c_crp19_class",
+        "categoryId": "ARBITRATION",
+        "title": "Strict Class Action and Collective Arbitration Waiver",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "evidence": "You agree that any arbitration proceedings shall be conducted solely on an individual basis without any class or representative status."
+      },
+      {
+        "clauseId": "c_crp19_hack",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Total Disclaimer for Smart Contract Hacks and Wallet Theft",
+        "severity": "HIGH",
+        "confidence": 0.92,
+        "evidence": "Exchange bears zero liability for loss of digital tokens resulting from blockchain forks, flash loan exploits, cyberattacks, or wallet bridge hacks."
+      },
+      {
+        "clauseId": "c_crp19_freeze",
+        "categoryId": "ACCOUNT_SUSPENSION",
+        "title": "Discretionary Liquidation and Indefinite Fund Freezes",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "We reserve the right to freeze withdrawal requests and liquidate leveraged margin positions during periods of high market volatility without notice."
+      },
+      {
+        "clauseId": "c_crp19_cap",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Recovery Restricted to Last 30-Day Trading Fees",
+        "severity": "HIGH",
+        "confidence": 0.89,
+        "evidence": "Our total liability for platform failure or misexecuted orders shall not exceed the trading commissions paid by you in the preceding 30 days."
+      },
+      {
+        "clauseId": "c_crp19_kyc",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Global Anti-Money Laundering Data Disclosures",
+        "severity": "MEDIUM",
+        "confidence": 0.83,
+        "evidence": "Customer identity credentials and wallet flows are forwarded to international financial regulatory networks."
+      },
+      {
+        "clauseId": "c_crp19_fee",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Inactivity Custody Surcharge",
+        "severity": "LOW",
+        "confidence": 0.78,
+        "evidence": "Accounts dormant for over 180 days incur a monthly 0.1% cold-storage ledger fee."
+      }
+    ],
+    "groundTruthRelevant": ["c_crp19_arb", "c_crp19_class", "c_crp19_hack", "c_crp19_freeze", "c_crp19_cap"]
+  },
+  {
+    "id": "RANK_GEN_20",
+    "policyType": "Enterprise Project Collaboration",
+    "description": "Multi-tenant project management and video communication platform terms.",
+    "rationale": "Balanced corporate customer with ARBITRATION=5 and PRIVACY_DATA_SHARING=5 prioritizes dispute resolution clauses and commercial data mining over standard billing terms.",
+    "userPreferences": {
+      "ARBITRATION": 5,
+      "PRIVACY_DATA_SHARING": 5,
+      "AUTO_RENEWAL": 2,
+      "USER_CONTENT_RIGHTS": 2
+    },
+    "findings": [
+      {
+        "clauseId": "c_gen20_arb",
+        "categoryId": "ARBITRATION",
+        "title": "Binding Commercial Arbitration Mandate",
+        "severity": "HIGH",
+        "confidence": 0.96,
+        "evidence": "Any dispute arising under this agreement shall be settled by binding arbitration in accordance with AAA commercial arbitration rules."
+      },
+      {
+        "clauseId": "c_gen20_mining",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Commercial Data Mining of Workspace Transcripts",
+        "severity": "HIGH",
+        "confidence": 0.94,
+        "evidence": "We analyze team meeting transcripts and shared whiteboard text to train automated business intelligence features and commercial partner ad models."
+      },
+      {
+        "clauseId": "c_gen20_caw",
+        "categoryId": "ARBITRATION",
+        "title": "Waiver of Representative and Class Actions",
+        "severity": "HIGH",
+        "confidence": 0.93,
+        "evidence": "You agree to resolve disputes on an individual basis and waive any right to bring representative legal actions."
+      },
+      {
+        "clauseId": "c_gen20_telemetry",
+        "categoryId": "PRIVACY_DATA_SHARING",
+        "title": "Extensive Employee Device Telemetry Harvesting",
+        "severity": "HIGH",
+        "confidence": 0.91,
+        "evidence": "The desktop agent logs running background processes, Wi-Fi BSSIDs, and peripheral hardware IDs during active sessions."
+      },
+      {
+        "clauseId": "c_gen20_limit",
+        "categoryId": "LIABILITY_LIMITATION",
+        "title": "Aggregate Liability Cap Equal to 12 Months Spend",
+        "severity": "HIGH",
+        "confidence": 0.89,
+        "evidence": "Total liability across all claims is capped strictly at fees paid by customer in the preceding twelve months."
+      },
+      {
+        "clauseId": "c_gen20_renew",
+        "categoryId": "AUTO_RENEWAL",
+        "title": "Annual Multi-Seat Auto-Renewal",
+        "severity": "LOW",
+        "confidence": 0.80,
+        "evidence": "Enterprise workspace licenses automatically renew at annual list price on the contract anniversary."
+      },
+      {
+        "clauseId": "c_gen20_export",
+        "categoryId": "DATA_RETENTION",
+        "title": "30-Day Data Export Grace Period",
+        "severity": "LOW",
+        "confidence": 0.77,
+        "evidence": "Customer may export tenant data for up to thirty days following contract termination."
+      }
+    ],
+    "groundTruthRelevant": ["c_gen20_arb", "c_gen20_mining", "c_gen20_caw", "c_gen20_telemetry", "c_gen20_limit"]
+  }
+]

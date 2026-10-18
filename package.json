@@ -1,0 +1,28 @@
+{
+  "name": "tos-red-flag-scanner",
+  "version": "1.0.0",
+  "description": "Scan Terms and Privacy policies for risky clauses in plain English.",
+  "main": "backend/server.js",
+  "type": "module",
+  "workspaces": [
+    "backend"
+  ],
+  "scripts": {
+    "start": "node scripts/start.js",
+    "dev": "node --watch backend/server.js",
+    "test": "node scripts/test-all.js",
+    "test:backend": "node --test backend/tests/*.test.js"
+  },
+  "homepage": "https://syllabuscal.ranjansharma.info.np",
+  "keywords": [
+    "terms-of-service",
+    "privacy-policy",
+    "legal-tech",
+    "risk-analysis",
+    "policy-scanner",
+    "nodejs",
+    "express"
+  ],
+  "author": "",
+  "license": "ISC"
+}

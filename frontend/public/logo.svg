@@ -1,0 +1,33 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Container tile with subtle architectural border -->
+  <rect width="512" height="512" rx="104" fill="#14181A"/>
+  <rect x="4" y="4" width="504" height="504" rx="100" stroke="#222A2E" stroke-width="8" fill="none"/>
+
+  <!-- Architectural document structure -->
+  <path d="M144 84 H324 L392 152 V412 A 16 16 0 0 1 376 428 H144 A 16 16 0 0 1 128 412 V100 A 16 16 0 0 1 144 84 Z" fill="#1C2226" stroke="#2E383E" stroke-width="8" stroke-linejoin="round"/>
+
+  <!-- Document corner fold -->
+  <path d="M324 84 V140 A 12 12 0 0 0 336 152 H392 Z" fill="#262F34" stroke="#2E383E" stroke-width="6" stroke-linejoin="round"/>
+
+  <!-- Document clause margin spine -->
+  <rect x="172" y="144" width="6" height="236" rx="3" fill="#2E383E"/>
+
+  <!-- Standard Clause 1 -->
+  <rect x="196" y="162" width="148" height="12" rx="4" fill="#64748B"/>
+  <rect x="196" y="186" width="108" height="10" rx="3" fill="#475569"/>
+
+  <!-- Target Flagged Clause 2 with Risk Signal -->
+  <!-- Vertical Risk Signal Marker -->
+  <rect x="169" y="218" width="12" height="56" rx="4" fill="#DC2626"/>
+  <!-- Highlighted Clause Content -->
+  <rect x="196" y="222" width="156" height="14" rx="4" fill="#F1F5F9"/>
+  <!-- Steel-Blue Clause Annotation Accent -->
+  <rect x="196" y="250" width="132" height="12" rx="3" fill="#3874CB"/>
+
+  <!-- Standard Clause 3 -->
+  <rect x="196" y="296" width="140" height="10" rx="3" fill="#475569"/>
+  <rect x="196" y="318" width="96" height="10" rx="3" fill="#334155"/>
+
+  <!-- Standard Clause 4 -->
+  <rect x="196" y="352" width="116" height="10" rx="3" fill="#334155"/>
+</svg>
