@@ -1,17 +1,58 @@
+import asyncio
+from contextlib import asynccontextmanager
+import logging
 from typing import Optional, List
 from fastapi import FastAPI, HTTPException, status
 from pydantic import BaseModel, Field
 from app.config import settings
 from app.services.embedding_service import embedding_service, EMBEDDING_DIMENSION
+from app.services.nli_service import nli_service
 from app.routers.vectors import router as vectors_router
+from app.routers.nli import router as nli_router
+from app.security.auth import InternalTokenAuthMiddleware
+
+logger = logging.getLogger("prismclause.ai")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Lifespan context manager for FastAPI.
+
+    Performs safe NLI model warm-up on CPU before the service reports ready.
+    If warm-up times out or encounters an error, the exception is caught, logged,
+    and the service starts cleanly in degraded mode to preserve Gemini Q&A availability.
+    """
+    if settings.NLI_WARMUP_ON_STARTUP:
+        try:
+            logger.info("Pre-warming NLI model '%s' on CPU...", nli_service.model_name)
+            # Bound warm-up duration to 25 seconds to prevent indefinite startup hangs
+            warmed = await asyncio.wait_for(
+                asyncio.to_thread(nli_service.warm_up),
+                timeout=25.0
+            )
+            if warmed:
+                logger.info("NLI model '%s' successfully warmed up.", nli_service.model_name)
+            else:
+                logger.warning("NLI model warm-up completed without ready state (degraded mode).")
+        except asyncio.TimeoutError:
+            logger.error("NLI model warm-up timed out after 25s; continuing startup in degraded mode.")
+        except Exception as err:
+            logger.error("NLI model warm-up failed: %s; continuing startup in degraded mode.", err)
+
+    yield
+
 
 app = FastAPI(
     title="PrismClause AI Service",
     description="Isolated AI/NLP Microservice for PrismClause",
-    version="0.1.0"
+    version="0.1.0",
+    lifespan=lifespan
 )
 
+app.add_middleware(InternalTokenAuthMiddleware)
+
 app.include_router(vectors_router)
+app.include_router(nli_router)
 
 class EmbedRequest(BaseModel):
     text: Optional[str] = Field(default=None, description="Single text string to embed")
@@ -19,7 +60,12 @@ class EmbedRequest(BaseModel):
 
 @app.get("/health")
 def health_check():
-    return {"status": "ok"}
+    model_loaded = nli_service.is_model_loaded()
+    return {
+        "status": "ok",
+        "model_loaded": model_loaded,
+        "nli_status": "ready" if model_loaded else "cold_or_unavailable"
+    }
 
 @app.post(
     "/ai/embed",

@@ -295,11 +295,20 @@ test("ProviderFactory: disabled Gemini feature flag does not select Gemini", () 
 });
 
 test("ProviderFactory: preserves NVIDIA provider as default when NVIDIA_API_KEY is provided", () => {
-  const provider = createAiProvider({
-    apiKey: "nvidia_test_key"
-  });
+  const originalAiProvider = process.env.AI_PROVIDER;
+  const originalGeminiEnabled = process.env.ENABLE_GEMINI_PROVIDER;
+  try {
+    delete process.env.AI_PROVIDER;
+    delete process.env.ENABLE_GEMINI_PROVIDER;
+    const provider = createAiProvider({
+      apiKey: "nvidia_test_key"
+    });
 
-  assert.equal(provider.name, "nvidia");
+    assert.equal(provider.name, "nvidia");
+  } finally {
+    if (originalAiProvider !== undefined) process.env.AI_PROVIDER = originalAiProvider;
+    if (originalGeminiEnabled !== undefined) process.env.ENABLE_GEMINI_PROVIDER = originalGeminiEnabled;
+  }
 });
 
 test("AiAnalysisService: operates seamlessly with GeminiProvider", async () => {
@@ -435,6 +444,304 @@ test("GeminiProvider: transmits prompt containing retrieved evidence to Gemini e
     const sentText = capturedPayload?.contents?.[0]?.parts?.[0]?.text || "";
     assert.ok(sentText.includes("Retrieved Supporting Evidence From Document:"));
     assert.ok(sentText.includes("No class arbitrations are permitted under any circumstances."));
+  } finally {
+    await mock.close();
+  }
+});
+
+test("GeminiProvider: seamlessly fails over to fallback candidate model when primary model returns 503 high demand", async () => {
+  const requestedEndpoints = [];
+
+  const mock = await createMockServer((req, res) => {
+    requestedEndpoints.push(req.url);
+    if (requestedEndpoints.length === 1) {
+      // First model request returns 503 high demand
+      res.writeHead(503, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: { code: 503, message: "This model is experiencing high demand." } }));
+    } else {
+      // Subsequent fallback candidate succeeds
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      answer: "Yes, subscriptions renew automatically until cancelled.",
+                      grounded: true,
+                      confidence: 0.95,
+                      relevantClauseIds: ["c_1"]
+                    })
+                  }
+                ],
+                role: "model"
+              },
+              finishReason: "STOP"
+            }
+          ]
+        })
+      );
+    }
+  });
+
+  try {
+    const provider = new GeminiProvider({
+      apiKey: "test_fallback_key",
+      model: "gemini-2.5-pro",
+      baseUrl: mock.url
+    });
+
+    const result = await provider.answerQuestion({
+      question: "Does my subscription renew?",
+      retrievedEvidence: [{ clauseId: "c_1", text: "Subscriptions renew automatically each month." }]
+    });
+
+    assert.equal(result.available, true);
+    assert.equal(result.data.grounded, true);
+    assert.ok(result.data.answer.includes("renew automatically"));
+    assert.equal(requestedEndpoints.length, 2, "Must attempt primary model then fall back to candidate");
+    assert.ok(requestedEndpoints[0].includes("gemini-2.5-pro"));
+    assert.ok(requestedEndpoints[1].includes("gemini-flash-latest"));
+  } finally {
+    await mock.close();
+  }
+});
+
+test("GeminiProvider: primary-model HTTP 429 triggers secondary candidate gemini-flash-lite-latest and returns available answer", async () => {
+  const requestedEndpoints = [];
+
+  const mock = await createMockServer((req, res) => {
+    requestedEndpoints.push(req.url);
+    if (requestedEndpoints.length === 1) {
+      res.writeHead(429, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: { code: 429, message: "Resource has been exhausted (rate limited)." } }));
+    } else {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      answer: "To cancel your subscription, visit your account page and select Cancel.",
+                      grounded: true,
+                      confidence: 0.95,
+                      relevantClauseIds: ["c_cancel"]
+                    })
+                  }
+                ],
+                role: "model"
+              },
+              finishReason: "STOP"
+            }
+          ]
+        })
+      );
+    }
+  });
+
+  try {
+    const provider = new GeminiProvider({
+      apiKey: "test_429_key",
+      model: "gemini-flash-latest",
+      baseUrl: mock.url
+    });
+
+    const result = await provider.answerQuestion({
+      question: "How can I cancel my subscription?",
+      retrievedEvidence: [{ clauseId: "c_cancel", text: "You may cancel your subscription at any time." }]
+    });
+
+    assert.equal(result.available, true);
+    assert.equal(result.data.grounded, true);
+    assert.ok(result.data.answer.includes("account page"));
+    assert.equal(requestedEndpoints.length, 2, "Primary 429 must trigger secondary candidate");
+    assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"), "Primary attempt must be gemini-flash-latest");
+    assert.ok(requestedEndpoints[1].includes("gemini-flash-lite-latest"), "Secondary attempt must be gemini-flash-lite-latest");
+  } finally {
+    await mock.close();
+  }
+});
+
+test("GeminiProvider: reaches secondary candidate when earlier candidate encounters 404 or timeout", async () => {
+  const requestedEndpoints = [];
+
+  const mock = await createMockServer((req, res) => {
+    requestedEndpoints.push(req.url);
+    if (requestedEndpoints.length === 1) {
+      res.writeHead(404, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: { code: 404, message: "Model not found." } }));
+    } else {
+      res.writeHead(200, { "Content-Type": "application/json" });
+      res.end(
+        JSON.stringify({
+          candidates: [
+            {
+              content: {
+                parts: [
+                  {
+                    text: JSON.stringify({
+                      answer: "Yes, you will be billed after free trial.",
+                      grounded: true,
+                      confidence: 0.9,
+                      relevantClauseIds: ["c_trial"]
+                    })
+                  }
+                ],
+                role: "model"
+              },
+              finishReason: "STOP"
+            }
+          ]
+        })
+      );
+    }
+  });
+
+  try {
+    const provider = new GeminiProvider({
+      apiKey: "test_404_key",
+      model: "gemini-flash-latest",
+      baseUrl: mock.url
+    });
+
+    const result = await provider.answerQuestion({
+      question: "Will I be charged after trial?",
+      retrievedEvidence: [{ clauseId: "c_trial", text: "Trial converts to paid subscription automatically." }]
+    });
+
+    assert.equal(result.available, true);
+    assert.equal(result.data.grounded, true);
+    assert.equal(requestedEndpoints.length, 2);
+    assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"));
+    assert.ok(requestedEndpoints[1].includes("gemini-flash-lite-latest"));
+  } finally {
+    await mock.close();
+  }
+});
+
+test("GeminiProvider: duplicate candidate names are attempted only once", async () => {
+  const requestedEndpoints = [];
+
+  const mock = await createMockServer((req, res) => {
+    requestedEndpoints.push(req.url);
+    res.writeHead(503, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: { code: 503, message: "Model unavailable." } }));
+  });
+
+  try {
+    const provider = new GeminiProvider({
+      apiKey: "test_dedupe_key",
+      model: "gemini-flash-latest",
+      baseUrl: mock.url
+    });
+
+    const result = await provider.answerQuestion({
+      question: "How do I cancel?",
+      retrievedEvidence: [{ clauseId: "c_cancel", text: "You can cancel in account settings." }]
+    });
+
+    assert.equal(result.available, false);
+    assert.equal(requestedEndpoints.length, 2, "Must attempt primary then secondary without duplicating primary");
+    assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"));
+    assert.ok(requestedEndpoints[1].includes("gemini-flash-lite-latest"));
+    const uniqueEndpoints = new Set(requestedEndpoints);
+    assert.equal(uniqueEndpoints.size, requestedEndpoints.length, "No candidate name must be attempted twice");
+  } finally {
+    await mock.close();
+  }
+});
+
+test("GeminiProvider: returns safe unavailable result when both candidates fail", async () => {
+  const requestedEndpoints = [];
+
+  const mock = await createMockServer((req, res) => {
+    requestedEndpoints.push(req.url);
+    res.writeHead(429, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: { code: 429, message: "Resource exhausted on all models." } }));
+  });
+
+  try {
+    const provider = new GeminiProvider({
+      apiKey: "test_all_fail_key",
+      model: "gemini-flash-latest",
+      baseUrl: mock.url
+    });
+
+    const result = await provider.answerQuestion({
+      question: "Will I be charged?",
+      retrievedEvidence: [{ clauseId: "c_1", text: "Paid subscriptions renew automatically." }]
+    });
+
+    assert.equal(result.available, false);
+    assert.equal(result.reason, "rate_limited");
+    assert.equal(requestedEndpoints.length, 2, "Must safely fail after attempting both candidates");
+    assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"));
+    assert.ok(requestedEndpoints[1].includes("gemini-flash-lite-latest"));
+  } finally {
+    await mock.close();
+  }
+});
+
+test("GeminiProvider: authentication errors retain existing behavior without cycling candidates", async () => {
+  const requestedEndpoints = [];
+
+  const mock = await createMockServer((req, res) => {
+    requestedEndpoints.push(req.url);
+    res.writeHead(401, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: { code: 401, message: "API key invalid." } }));
+  });
+
+  try {
+    const provider = new GeminiProvider({
+      apiKey: "bad_key",
+      model: "gemini-flash-latest",
+      baseUrl: mock.url
+    });
+
+    const result = await provider.answerQuestion({
+      question: "How do I cancel?",
+      retrievedEvidence: [{ clauseId: "c_1", text: "Cancel via settings." }]
+    });
+
+    assert.equal(result.available, false);
+    assert.equal(result.reason, "auth_error");
+    assert.equal(requestedEndpoints.length, 1, "Auth error must abort immediately without trying secondary candidate");
+    assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"));
+  } finally {
+    await mock.close();
+  }
+});
+
+test("GeminiProvider: invalid request errors retain existing behavior without cycling candidates", async () => {
+  const requestedEndpoints = [];
+
+  const mock = await createMockServer((req, res) => {
+    requestedEndpoints.push(req.url);
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: { code: 400, message: "Invalid argument." } }));
+  });
+
+  try {
+    const provider = new GeminiProvider({
+      apiKey: "valid_key",
+      model: "gemini-flash-latest",
+      baseUrl: mock.url
+    });
+
+    const result = await provider.answerQuestion({
+      question: "How do I cancel?",
+      retrievedEvidence: [{ clauseId: "c_1", text: "Cancel via settings." }]
+    });
+
+    assert.equal(result.available, false);
+    assert.equal(result.reason, "invalid_request");
+    assert.equal(requestedEndpoints.length, 1, "Invalid request must abort immediately without trying secondary candidate");
+    assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"));
   } finally {
     await mock.close();
   }

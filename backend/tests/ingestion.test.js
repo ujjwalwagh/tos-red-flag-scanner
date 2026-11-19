@@ -4,7 +4,7 @@ import fs from "node:fs";
 import { processPdfDocument, validatePdfBuffer } from "../src/ingestion/pdf/document-processor.js";
 import { extractPdfPages } from "../src/ingestion/pdf/pdf-extractor.js";
 import { AppError } from "../src/security/security.js";
-import { extractReadableText, normalizeExtractedText, MAX_POLICY_TEXT_LENGTH } from "../src/ingestion/url/fetch-policy-text.js";
+import { extractReadableText, normalizeExtractedText, MAX_POLICY_TEXT_LENGTH, MAX_ANALYSIS_CHARACTERS } from "../src/ingestion/url/fetch-policy-text.js";
 import { scanPolicyForRedFlags } from "../src/analysis/semantic/scan-policy.js";
 
 import path from "node:path";
@@ -109,8 +109,24 @@ test("maintains clear distinction between rawText and normalizedText", async () 
 // URL & TEXT INGESTION BOUNDARY REGRESSION TESTS
 // =========================================================================
 
-test("URL & pasted text ingestion limit is configured to 64,000 characters", () => {
-  assert.equal(MAX_POLICY_TEXT_LENGTH, 64_000);
+test("URL & pasted text ingestion limit is configured to 100,000 characters", () => {
+  assert.equal(MAX_POLICY_TEXT_LENGTH, 100_000);
+  assert.equal(MAX_ANALYSIS_CHARACTERS, 100_000);
+});
+
+test("64,000-character policy is fully ingested without truncation", () => {
+  const text = "A".repeat(64_000);
+  assert.equal(text.slice(0, MAX_POLICY_TEXT_LENGTH).length, 64_000);
+});
+
+test("71,979-character document (e.g. Spotify Privacy Policy) is fully ingested without truncation", () => {
+  const text = "A".repeat(71_979);
+  assert.equal(text.slice(0, MAX_POLICY_TEXT_LENGTH).length, 71_979);
+});
+
+test("exactly 100,000 characters is accepted completely without truncation", () => {
+  const text = "B".repeat(100_000);
+  assert.equal(text.slice(0, MAX_POLICY_TEXT_LENGTH).length, 100_000);
 });
 
 test("a policy longer than 24,000 characters is not prematurely truncated at the old limit", () => {
@@ -126,7 +142,7 @@ test("a policy longer than 24,000 characters is not prematurely truncated at the
   assert.ok(extracted.length > 24_000, `Extracted length (${extracted.length}) should exceed old 24k limit`);
 
   const ingested = extracted.slice(0, MAX_POLICY_TEXT_LENGTH);
-  assert.equal(ingested.length, extracted.length, "Policy under 64,000 characters should not be truncated");
+  assert.equal(ingested.length, extracted.length, "Policy under 100,000 characters should not be truncated");
   assert.ok(ingested.includes("Final section: Concluding provisions"), "Trailing sections past 24k boundary must be preserved");
 });
 
@@ -152,9 +168,9 @@ test("the phrase 'California law will govern these terms' survives extraction ar
   const oldTruncated = extracted.slice(0, 24_000);
   assert.ok(!oldTruncated.includes(governingLawClause), "Old 24,000 limit must fail to contain the full governing law sentence");
 
-  // Under new 64_000 limit, it is preserved completely
+  // Under new 100_000 limit, it is preserved completely
   const newIngested = extracted.slice(0, MAX_POLICY_TEXT_LENGTH);
-  assert.ok(newIngested.includes(governingLawClause), "New 64,000 limit must preserve the complete governing law sentence");
+  assert.ok(newIngested.includes(governingLawClause), "New 100,000 limit must preserve the complete governing law sentence");
 
   // Verify that the full pipeline analyzes the clause and detects RULE_GOVERNING_LAW without synthetic fallback
   const report = await scanPolicyForRedFlags(newIngested, "https://example.com/terms", { mode: "broad" });
@@ -167,10 +183,10 @@ test("the phrase 'California law will govern these terms' survives extraction ar
   assert.equal(syntheticFallback, undefined, "Synthetic fallback finding must not be present when real finding is detected");
 });
 
-test("the configured 64,000-character limit is respected for oversized documents", () => {
-  const hugeText = "A".repeat(80_000);
+test("the configured 100,000-character limit is respected for oversized documents", () => {
+  const hugeText = "A".repeat(120_000);
   const sliced = hugeText.slice(0, MAX_POLICY_TEXT_LENGTH);
-  assert.equal(sliced.length, 64_000);
+  assert.equal(sliced.length, 100_000);
 });
 
 test("existing shorter-document extraction behavior remains unchanged", () => {

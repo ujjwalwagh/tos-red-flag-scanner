@@ -10,6 +10,7 @@ import assert from "node:assert/strict";
 import http from "node:http";
 import { PythonAiClient } from "../src/ai/ai-client.js";
 import { compareClauses } from "../src/analysis/semantic/clause-comparator.js";
+import { parsePositiveInt } from "../src/config/env.js";
 
 // Helper to spawn a temporary mock HTTP server for deterministic failure injection
 function createMockServer(handler) {
@@ -306,4 +307,202 @@ test("PythonAiClient: disabled feature flag skips network calls immediately", as
   const embed = await client.embedText("Test");
   assert.equal(embed.success, false);
   assert.equal(embed.error, "python_ai_service_disabled");
+});
+
+test("PythonAiClient: default NLI timeout is 15000 ms and independent of general timeout", () => {
+  const client = new PythonAiClient({ timeoutMs: 4000 });
+  assert.equal(client.timeoutMs, 4000, "General timeout must respect explicit configuration");
+  assert.equal(client.nliTimeoutMs, 15000, "Default NLI timeout must be 15000 ms");
+
+  const defaultClient = new PythonAiClient();
+  assert.equal(defaultClient.nliTimeoutMs, 15000, "Unconfigured client must use 15000 ms NLI timeout");
+});
+
+test("PythonAiClient: options and environment override work for nliTimeoutMs", () => {
+  const client = new PythonAiClient({ nliTimeoutMs: 25000, timeoutMs: 3000 });
+  assert.equal(client.nliTimeoutMs, 25000, "Explicit nliTimeoutMs option must override default");
+  assert.equal(client.timeoutMs, 3000, "General timeout must remain completely independent");
+});
+
+test("PythonAiClient: invalid timeout configurations fall back safely to defaults", () => {
+  const clientNeg = new PythonAiClient({ nliTimeoutMs: -1000, timeoutMs: 0 });
+  assert.equal(clientNeg.nliTimeoutMs, 15000, "Negative NLI timeout must fall back to 15000");
+  assert.equal(clientNeg.timeoutMs, 5000, "Zero general timeout must fall back to 5000");
+
+  const clientStr = new PythonAiClient({ nliTimeoutMs: "invalid_string", timeoutMs: NaN });
+  assert.equal(clientStr.nliTimeoutMs, 15000, "Non-numeric NLI timeout must fall back to 15000");
+  assert.equal(clientStr.timeoutMs, 5000, "NaN timeout must fall back to 5000");
+});
+
+test("PythonAiClient: parsePositiveInt validates positive integers within range", () => {
+  assert.equal(parsePositiveInt("20000", 15000), 20000);
+  assert.equal(parsePositiveInt("15000", 15000), 15000);
+  assert.equal(parsePositiveInt("-500", 15000), 15000);
+  assert.equal(parsePositiveInt("0", 15000), 15000);
+  assert.equal(parsePositiveInt("abc", 15000), 15000);
+  assert.equal(parsePositiveInt("", 15000), 15000);
+  assert.equal(parsePositiveInt(undefined, 15000), 15000);
+  assert.equal(parsePositiveInt(null, 15000), 15000);
+  assert.equal(parsePositiveInt(400000, 15000, 1, 300000), 15000, "Exceeding max must fall back");
+});
+
+test("PythonAiClient: validateNli respects effective NLI timeout during HTTP request", async () => {
+  const mock = await createMockServer((req, res) => {
+    if (req.url === "/ai/nli/validate") {
+      // Intentionally delay longer than the test timeout
+      setTimeout(() => {
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          status: "supported",
+          is_supported: true,
+          label: "entailment",
+          scores: { entailment: 0.9, neutral: 0.05, contradiction: 0.05 }
+        }));
+      }, 150);
+    }
+  });
+
+  try {
+    const client = new PythonAiClient({
+      baseUrl: mock.url,
+      nliTimeoutMs: 50 // Short timeout to verify trigger
+    });
+
+    const res = await client.validateNli("Test answer", [{ text: "Test evidence" }]);
+    assert.equal(res.success, false);
+    assert.equal(res.available, false);
+    assert.equal(res.isTimeout, true);
+    assert.equal(res.error, "request_timeout");
+  } finally {
+    await mock.close();
+  }
+});
+
+test("PythonAiClient: indexClauses correctly chunks batches > 400 and aggregates indexed count", async () => {
+  const receivedChunks = [];
+  const mock = await createMockServer((req, res) => {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", () => {
+      if (req.url === "/ai/vectors/index" && req.method === "POST") {
+        const payload = JSON.parse(body);
+        receivedChunks.push({
+          docId: payload.document_id,
+          clauseCount: payload.clauses.length,
+          firstId: payload.clauses[0].clause_id,
+          lastId: payload.clauses[payload.clauses.length - 1].clause_id
+        });
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({
+          document_id: payload.document_id,
+          indexed_count: payload.clauses.length,
+          status: "success"
+        }));
+      }
+    });
+  });
+
+  try {
+    const client = new PythonAiClient({ baseUrl: mock.url, timeoutMs: 1000 });
+
+    // Test with 693 clauses (Spotify Privacy Policy size)
+    const clauses693 = Array.from({ length: 693 }, (_, i) => ({
+      clause_id: `clause_${i}`,
+      text: `Clause text ${i}`
+    }));
+
+    const res693 = await client.indexClauses("spotify_privacy", clauses693);
+    assert.equal(res693.success, true);
+    assert.equal(res693.indexedCount, 693);
+    assert.equal(res693.documentId, "spotify_privacy");
+
+    // Must be split into 2 chunks: 400 + 293
+    assert.equal(receivedChunks.length, 2);
+    assert.equal(receivedChunks[0].clauseCount, 400);
+    assert.equal(receivedChunks[0].firstId, "clause_0");
+    assert.equal(receivedChunks[0].lastId, "clause_399");
+    assert.equal(receivedChunks[1].clauseCount, 293);
+    assert.equal(receivedChunks[1].firstId, "clause_400");
+    assert.equal(receivedChunks[1].lastId, "clause_692");
+
+    receivedChunks.length = 0;
+
+    // Test with boundary counts: 400 (1 chunk), 401 (2 chunks: 400 + 1), 1000 (3 chunks: 400 + 400 + 200)
+    const clauses400 = Array.from({ length: 400 }, (_, i) => ({ clause_id: `c_${i}`, text: `txt ${i}` }));
+    const res400 = await client.indexClauses("doc_400", clauses400);
+    assert.equal(res400.success, true);
+    assert.equal(res400.indexedCount, 400);
+    assert.equal(receivedChunks.length, 1);
+    assert.equal(receivedChunks[0].clauseCount, 400);
+
+    receivedChunks.length = 0;
+
+    const clauses401 = Array.from({ length: 401 }, (_, i) => ({ clause_id: `c_${i}`, text: `txt ${i}` }));
+    const res401 = await client.indexClauses("doc_401", clauses401);
+    assert.equal(res401.success, true);
+    assert.equal(res401.indexedCount, 401);
+    assert.equal(receivedChunks.length, 2);
+    assert.equal(receivedChunks[0].clauseCount, 400);
+    assert.equal(receivedChunks[1].clauseCount, 1);
+
+    receivedChunks.length = 0;
+
+    const clauses1000 = Array.from({ length: 1000 }, (_, i) => ({ clause_id: `c_${i}`, text: `txt ${i}` }));
+    const res1000 = await client.indexClauses("doc_1000", clauses1000);
+    assert.equal(res1000.success, true);
+    assert.equal(res1000.indexedCount, 1000);
+    assert.equal(receivedChunks.length, 3);
+    assert.equal(receivedChunks[0].clauseCount, 400);
+    assert.equal(receivedChunks[1].clauseCount, 400);
+    assert.equal(receivedChunks[2].clauseCount, 200);
+
+    // Test rejection over 1000 clauses
+    const clauses1001 = Array.from({ length: 1001 }, (_, i) => ({ clause_id: `c_${i}`, text: `txt ${i}` }));
+    const res1001 = await client.indexClauses("doc_1001", clauses1001);
+    assert.equal(res1001.success, false);
+    assert.ok(res1001.error.includes("maximum limit of 1,000 clauses"));
+  } finally {
+    await mock.close();
+  }
+});
+
+test("PythonAiClient: indexClauses safely rolls back and deletes vectors if any chunk fails", async () => {
+  let chunkCount = 0;
+  let deletedDocId = null;
+
+  const mock = await createMockServer((req, res) => {
+    let body = "";
+    req.on("data", (chunk) => { body += chunk; });
+    req.on("end", () => {
+      if (req.url === "/ai/vectors/index" && req.method === "POST") {
+        chunkCount++;
+        if (chunkCount === 1) {
+          // Chunk 1 succeeds
+          res.writeHead(200, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ document_id: "doc_fail", indexed_count: 400, status: "success" }));
+        } else {
+          // Chunk 2 fails with 500
+          res.writeHead(500, { "Content-Type": "application/json" });
+          res.end(JSON.stringify({ detail: "ChromaDB disk full" }));
+        }
+      } else if (req.url.startsWith("/ai/vectors/") && req.method === "DELETE") {
+        deletedDocId = decodeURIComponent(req.url.replace("/ai/vectors/", ""));
+        res.writeHead(200, { "Content-Type": "application/json" });
+        res.end(JSON.stringify({ document_id: deletedDocId, deleted: true, status: "deleted" }));
+      }
+    });
+  });
+
+  try {
+    const client = new PythonAiClient({ baseUrl: mock.url, timeoutMs: 1000 });
+    const clauses = Array.from({ length: 600 }, (_, i) => ({ clause_id: `c_${i}`, text: `text ${i}` }));
+
+    const res = await client.indexClauses("doc_fail", clauses);
+    assert.equal(res.success, false);
+    assert.equal(res.status, 500);
+    // Verified that deleteDocumentVectors was triggered to clean up partially indexed chunk 1
+    assert.equal(deletedDocId, "doc_fail");
+  } finally {
+    await mock.close();
+  }
 });

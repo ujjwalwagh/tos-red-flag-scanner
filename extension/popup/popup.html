@@ -1,0 +1,434 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TOS Red Flag Scanner</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <div class="popup-container">
+      <!-- Top Brand Header -->
+      <header class="header">
+        <div class="brand">
+          <img src="../assets/icons/icon-32.png" alt="" class="brand-icon" width="22" height="22" />
+          <span class="brand-title">TOS Red Flag Scanner</span>
+        </div>
+        <div class="header-actions">
+          <button id="btn-open-options" class="btn-icon-header" title="Configure Backend &amp; Token" aria-label="Open Settings">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+          </button>
+          <span class="version-tag">v1.0.0</span>
+        </div>
+      </header>
+
+      <!-- Active Target Site Card -->
+      <section class="card site-card">
+        <div class="card-label">Active Target Website</div>
+        <div class="site-row">
+          <svg class="globe-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="2" y1="12" x2="22" y2="12"></line>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+          </svg>
+          <span id="site-hostname" class="site-hostname">Detecting active tab...</span>
+        </div>
+        <button id="btn-detect-policies" class="btn btn-primary">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <span id="btn-detect-text">Find Legal Documents</span>
+        </button>
+        <div id="detect-status-msg" class="detect-status-msg hidden"></div>
+      </section>
+
+      <!-- Backend Connection Status Card -->
+      <section class="card status-card">
+        <div class="status-header">
+          <div class="card-label">Backend Engine Status</div>
+          <span id="backend-target-host" class="backend-target-host">localhost:3000</span>
+        </div>
+        <div class="status-indicator-row">
+          <span id="status-dot" class="status-dot status-checking"></span>
+          <span id="status-text" class="status-text">Checking backend connection...</span>
+        </div>
+        <div id="status-hint" class="status-hint"></div>
+        <div class="status-btn-row">
+          <button id="btn-check-connection" class="btn btn-secondary">
+            <span id="btn-text">Check Connection</span>
+          </button>
+          <button id="btn-configure-backend" class="btn btn-outline btn-configure" title="Configure Backend &amp; Token">
+            Settings
+          </button>
+        </div>
+      </section>
+
+      <!-- Selected Candidate Indicator Banner -->
+      <section id="selected-banner" class="card selected-card hidden">
+        <div class="selected-header">
+          <span class="badge badge-success">Selected Document</span>
+          <span id="selected-category" class="selected-category"></span>
+        </div>
+        <div id="selected-title" class="selected-title"></div>
+        <div id="selected-url" class="selected-url"></div>
+        <div class="selected-actions">
+          <button id="btn-extract-document" class="btn btn-primary btn-extract">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span id="btn-extract-text">Extract Selected Document</span>
+          </button>
+        </div>
+        <div id="extract-progress-msg" class="extract-progress-msg hidden"></div>
+      </section>
+
+      <!-- Document Preview Section (Phase 7E) -->
+      <section id="preview-section" class="preview-section hidden">
+        <!-- Category State Switcher (when multiple policies exist) -->
+        <div id="preview-tabs" class="preview-tabs">
+          <button id="tab-terms" class="preview-tab active" data-tab="TERMS">Terms of Service</button>
+          <button id="tab-privacy" class="preview-tab" data-tab="PRIVACY">Privacy Policy</button>
+        </div>
+
+        <div class="card preview-card">
+          <div class="preview-header">
+            <div class="preview-title-group">
+              <span class="badge badge-accent">Document Preview</span>
+              <span id="preview-category-badge" class="badge badge-outline">Terms of Service</span>
+            </div>
+            <span id="preview-status-badge" class="badge badge-success">Successful</span>
+          </div>
+
+          <!-- Document Metadata Grid -->
+          <div class="preview-meta-grid">
+            <div class="meta-item">
+              <span class="meta-label">Document Type:</span>
+              <span id="preview-doc-type" class="meta-val">Terms of Service</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Website:</span>
+              <span id="preview-website" class="meta-val">example.com</span>
+            </div>
+            <div class="meta-item meta-item-full">
+              <span class="meta-label">Source URL:</span>
+              <span id="preview-source-url" class="meta-val meta-url">https://example.com/terms</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Word Count:</span>
+              <span id="preview-word-count" class="meta-val">0 words</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">Character Count:</span>
+              <span id="preview-char-count" class="meta-val">0 characters</span>
+            </div>
+          </div>
+
+          <!-- Document Text Viewer -->
+          <div class="preview-text-wrapper">
+            <div class="preview-text-header">
+              <span class="preview-text-label">Extracted Legal Text (Cleaned):</span>
+              <span id="preview-heading-count" class="preview-heading-count"></span>
+            </div>
+            <pre id="preview-text-content" class="preview-text-content" tabindex="0"></pre>
+          </div>
+
+          <!-- Extraction Notice / Truncation or Warning Alert if any -->
+          <div id="preview-alert" class="preview-alert hidden"></div>
+
+          <!-- Actions Row: Confirm / Discard -->
+          <div id="preview-actions-row" class="preview-actions-row">
+            <button id="btn-confirm-document" class="btn btn-success">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span>Confirm Extracted Document</span>
+            </button>
+            <button id="btn-discard-document" class="btn btn-danger">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+              <span>Discard</span>
+            </button>
+          </div>
+
+          <!-- Confirmed Banner -->
+          <div id="preview-confirmed-banner" class="confirmed-banner hidden">
+            <div class="confirmed-info-row">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+              <div class="confirmed-text">
+                <strong>Document Confirmed ✓</strong>
+                <span id="confirmed-word-summary">Ready for Risk Analysis</span>
+              </div>
+            </div>
+            <button id="btn-analyze-document" class="btn btn-primary btn-analyze">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polygon points="5 3 19 12 5 21 5 3"></polygon>
+              </svg>
+              <span id="btn-analyze-text">Analyse Document</span>
+            </button>
+            <div id="analyze-progress-box" class="analyze-progress-box hidden">
+              <div class="analyze-spinner"></div>
+              <div id="analyze-progress-text" class="analyze-progress-text">Submitting document...</div>
+            </div>
+            <div id="analyze-error-box" class="analyze-error-box hidden"></div>
+
+            <!-- Oversized Document Partial Analysis Consent (Phase 7F.1) -->
+            <div id="oversized-consent-box" class="oversized-consent-box hidden">
+              <div class="consent-header">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <strong>Document Exceeds Analysis Capacity</strong>
+              </div>
+              <div class="consent-details">
+                <div>Original Size: <strong id="consent-orig-chars">0</strong> characters</div>
+                <div>Maximum Supported: <strong>100,000</strong> characters</div>
+              </div>
+              <p class="consent-desc">
+                Clauses beyond the first 100,000 characters will <strong>not</strong> be analysed. Would you like to proceed with partial analysis?
+              </p>
+              <div class="consent-actions">
+                <button id="btn-consent-proceed" class="btn btn-warning btn-sm">Proceed with Partial Analysis</button>
+                <button id="btn-consent-cancel" class="btn btn-secondary btn-sm">Cancel</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Risk Dashboard Section (Phase 7F) -->
+      <section id="dashboard-section" class="dashboard-section hidden">
+        <!-- Results Navigation Tabs -->
+        <div id="dashboard-tabs" class="dashboard-tabs">
+          <button id="dash-tab-terms" class="dash-tab active" data-tab="TERMS">Terms Risk Report</button>
+          <button id="dash-tab-privacy" class="dash-tab" data-tab="PRIVACY">Privacy Risk Report</button>
+        </div>
+
+        <div class="card dashboard-card">
+          <!-- Summary Header -->
+          <div class="dashboard-header">
+            <div class="dash-title-group">
+              <span class="card-label">Document Risk Assessment</span>
+              <span id="dash-doc-type" class="dash-doc-type">Terms of Service</span>
+            </div>
+            <div id="dash-overall-risk" class="threat-badge threat-high">HIGH RISK</div>
+          </div>
+
+          <!-- Partial Analysis Alert Banner (Phase 7F.1) -->
+          <div id="dash-partial-banner" class="dash-partial-banner hidden">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+            <div class="partial-banner-text">
+              <strong>PARTIAL ANALYSIS</strong>
+              <span id="dash-partial-text">Analysed first 100,000 characters. Later clauses were omitted.</span>
+            </div>
+          </div>
+
+          <!-- Overall Risk Metrics Grid -->
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-num text-high" id="metric-high-count">0</span>
+              <span class="metric-lbl">High Risks</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num text-warning" id="metric-med-count">0</span>
+              <span class="metric-lbl">Medium Risks</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num text-muted" id="metric-low-count">0</span>
+              <span class="metric-lbl">Low Risks</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-num text-primary" id="metric-readability-score">--</span>
+              <span class="metric-lbl">Complexity</span>
+            </div>
+          </div>
+
+          <!-- Readability Warning Banner if present -->
+          <div id="dash-readability-banner" class="readability-banner hidden">
+            <span class="readability-icon">ℹ</span>
+            <span id="dash-readability-text" class="readability-text"></span>
+          </div>
+
+          <!-- Red Flags Section Header -->
+          <div class="flags-header">
+            <span class="flags-title">Detected Red Flag Clauses</span>
+            <span id="dash-flags-count" class="count-badge">0</span>
+          </div>
+
+          <!-- Red Flags Cards Container -->
+          <div id="dash-flags-container" class="flags-container"></div>
+
+          <!-- Empty State (No risks detected) -->
+          <div id="dash-no-flags" class="dash-no-flags hidden">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+            <div class="no-flags-title">No Critical Red Flags Detected</div>
+            <p class="no-flags-desc">Deterministic analysis found no high-severity risk clauses in this document.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Document Q&A Section (Phase 7G) -->
+      <section id="qa-section" class="qa-section hidden">
+        <div class="card qa-card">
+          <div class="qa-header">
+            <div class="qa-title-group">
+              <span class="card-label">Document Q&amp;A</span>
+              <span id="qa-doc-type" class="qa-doc-type">Terms of Service</span>
+            </div>
+            <span class="badge badge-accent">Interactive AI</span>
+          </div>
+
+          <!-- Partial Document Notice if Oversized -->
+          <div id="qa-partial-banner" class="qa-partial-banner hidden">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <span id="qa-partial-text">Partial Document: Answers are grounded in the first 100,000 characters.</span>
+          </div>
+
+          <!-- Example Prompt Chips -->
+          <div class="qa-chips-wrapper">
+            <span class="qa-chips-label">Suggested Questions:</span>
+            <div class="qa-chips-row">
+              <button class="qa-chip" type="button" data-question="Can this company suspend my account without notice?">Account suspension?</button>
+              <button class="qa-chip" type="button" data-question="Can my personal data be shared with third parties?">Data sharing?</button>
+              <button class="qa-chip" type="button" data-question="Can I cancel my subscription?">Subscription cancellation?</button>
+              <button class="qa-chip" type="button" data-question="Does this agreement contain mandatory arbitration?">Arbitration?</button>
+              <button class="qa-chip" type="button" data-question="What happens to my content after account deletion?">Content ownership?</button>
+            </div>
+          </div>
+
+          <!-- Question Input Form -->
+          <form id="qa-form" class="qa-form">
+            <div class="qa-input-wrapper">
+              <textarea id="qa-question-input" class="qa-question-input" rows="2" maxlength="500" placeholder="Type a question about this policy (3–500 chars)..."></textarea>
+              <div class="qa-input-meta">
+                <span id="qa-char-count" class="qa-char-count">0 / 500</span>
+              </div>
+            </div>
+            <button id="btn-submit-qa" class="btn btn-primary btn-submit-qa" type="submit" disabled>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+              <span>Submit Question</span>
+            </button>
+          </form>
+
+          <!-- Loading Progress Box -->
+          <div id="qa-loading-box" class="qa-loading-box hidden">
+            <div class="qa-spinner"></div>
+            <span id="qa-loading-text">Analyzing document evidence with Gemini &amp; verifying with DeBERTa NLI...</span>
+          </div>
+
+          <!-- Error Alert Box -->
+          <div id="qa-error-box" class="qa-error-box hidden"></div>
+
+          <!-- Q&A Conversation History Container -->
+          <div id="qa-history-container" class="qa-history-container"></div>
+
+          <!-- Empty History Notice -->
+          <div id="qa-empty-history" class="qa-empty-history">
+            <span>No questions asked yet for this policy. Type a question or select a suggestion above.</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Detection Results Container -->
+      <div id="results-container" class="results-container hidden">
+        <!-- Current Page Candidate Section -->
+        <section id="current-page-section" class="card result-group hidden">
+          <div class="group-header">
+            <span class="group-title">Current Webpage Candidate</span>
+            <span class="badge badge-accent">Active Page</span>
+          </div>
+          <div id="current-page-card" class="candidate-item">
+            <div class="cand-info">
+              <div id="current-page-title" class="cand-title"></div>
+              <div id="current-page-url" class="cand-url"></div>
+              <div id="current-page-reason" class="cand-meta"></div>
+            </div>
+            <button id="btn-select-current" class="btn btn-sm btn-select">Select Current Page</button>
+          </div>
+        </section>
+
+        <!-- Terms of Service Section -->
+        <section id="terms-section" class="card result-group hidden">
+          <div class="group-header">
+            <span class="group-title">Terms of Service</span>
+            <span id="terms-count" class="count-badge">0</span>
+          </div>
+          <div id="terms-list" class="candidate-list"></div>
+        </section>
+
+        <!-- Privacy Policy Section -->
+        <section id="privacy-section" class="card result-group hidden">
+          <div class="group-header">
+            <span class="group-title">Privacy Policy</span>
+            <span id="privacy-count" class="count-badge">0</span>
+          </div>
+          <div id="privacy-list" class="candidate-list"></div>
+        </section>
+
+        <!-- Other Privacy / Regional Links Section -->
+        <section id="other-privacy-section" class="card result-group hidden">
+          <div class="group-header">
+            <span class="group-title">Other Privacy & Regional Links</span>
+            <span id="other-privacy-count" class="count-badge">0</span>
+          </div>
+          <div id="other-privacy-list" class="candidate-list"></div>
+        </section>
+
+        <!-- Legal Documents Hub Section -->
+        <section id="legal-hub-section" class="card result-group hidden">
+          <div class="group-header">
+            <span class="group-title">Legal Documents Hub</span>
+            <span id="legal-hub-count" class="count-badge">0</span>
+          </div>
+          <p class="section-hint" style="font-size: 11px; color: var(--text-muted, #94a3b8); margin: 4px 0 8px 0;">Central legal repository containing individual agreements &amp; policies:</p>
+          <div id="legal-hub-list" class="candidate-list"></div>
+        </section>
+
+        <!-- Empty state when no documents found -->
+        <div id="no-documents-msg" class="card empty-card hidden">
+          <div class="empty-title">No Legal Documents Found</div>
+          <p class="empty-desc">
+            No Terms of Service or Privacy links were detected on this page. Try scrolling down or opening the site's main footer.
+          </p>
+        </div>
+      </div>
+
+      <!-- Footer Actions -->
+      <footer class="footer">
+        <a id="link-open-webapp" href="http://localhost:3000" target="_blank" rel="noreferrer" class="footer-link">
+          Open Full Web Application &rarr;
+        </a>
+      </footer>
+    </div>
+
+    <script type="module" src="popup.js"></script>
+  </body>
+</html>

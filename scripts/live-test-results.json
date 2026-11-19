@@ -1,0 +1,538 @@
+[
+  {
+    "documentName": "GitHub Terms of Service",
+    "documentType": "TERMS",
+    "documentLabel": "Terms of Service",
+    "question": "What rights does GitHub have to use my content?",
+    "statusCode": 200,
+    "durationMs": 13610,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 1,
+      "available": true,
+      "evidenceCount": 10,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_161",
+          "section": "Section on Page 1",
+          "snippet": "To the extent this agreement is not enforceable by applicable law, you grant GitHub the rights we need to use Your Conte",
+          "similarity": 0.8566
+        },
+        {
+          "clauseId": "clause_160",
+          "section": "7. Moral Rights",
+          "snippet": "You retain all moral rights to Your Content that you upload, publish, or submit to any part of the Service, including th",
+          "similarity": 0.8139
+        },
+        {
+          "clauseId": "clause_185",
+          "section": "1. GitHub's Rights to Content",
+          "snippet": "GitHub and our licensors, vendors, agents, and/or our content providers retain ownership of all intellectual property ri",
+          "similarity": 0.8114
+        },
+        {
+          "clauseId": "clause_92",
+          "section": "Section on Page 1",
+          "snippet": "D. User-Generated ContentYou own the content you post on GitHub. However, you have some responsibilities regarding it, a",
+          "similarity": 0.8063
+        },
+        {
+          "clauseId": "clause_176",
+          "section": "Section on Page 1",
+          "snippet": "You may enable various GitHub services or features that require additional rights to Your Content in private repositorie",
+          "similarity": 0.7883
+        },
+        {
+          "clauseId": "clause_157",
+          "section": "Section on Page 1",
+          "snippet": "By making a repository public, you grant other Users a nonexclusive, worldwide license to use, display, perform and repr",
+          "similarity": 0.7855
+        },
+        {
+          "clauseId": "clause_169",
+          "section": "3. Access",
+          "snippet": "You control access to the content of your private repositories. GitHub considers the contents of private repositories to",
+          "similarity": 0.781
+        },
+        {
+          "clauseId": "clause_179",
+          "section": "Section on Page 1",
+          "snippet": "GitHub will provide notice regarding our access to private repository content, unless for legal disclosure, to comply wi",
+          "similarity": 0.7616
+        },
+        {
+          "clauseId": "clause_154",
+          "section": "Section on Page 1",
+          "snippet": "You grant us and other Users the licenses in Sections D.4 - D.8. These licenses apply to Your Content. If Your Content a",
+          "similarity": null
+        },
+        {
+          "clauseId": "clause_184",
+          "section": "Section on Page 1",
+          "snippet": "Short version: We own the service and all of our content. In order for you to use our content, we give you certain right",
+          "similarity": null
+        }
+      ],
+      "nliStatus": "supported",
+      "nliLabel": "entailment",
+      "nliReason": null,
+      "answerPreview": "To the extent the agreement is not enforceable by applicable law, you grant GitHub the rights needed to use your content without attribution and to make reasonable adaptations of your content as neces"
+    },
+    "error": null
+  },
+  {
+    "documentName": "GitHub Terms of Service",
+    "documentType": "TERMS",
+    "documentLabel": "Terms of Service",
+    "question": "Can GitHub suspend or terminate my account?",
+    "statusCode": 200,
+    "durationMs": 6520,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 1,
+      "available": true,
+      "evidenceCount": 2,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_235",
+          "section": "3. GitHub May Terminate",
+          "snippet": "GitHub has the right to suspend or terminate your access to all or any part of the Website at any time, with or without ",
+          "similarity": 0.7943
+        },
+        {
+          "clauseId": "clause_190",
+          "section": "Section on Page 1",
+          "snippet": "Abuse or excessively frequent requests to GitHub via the API may result in the temporary or permanent suspension of your",
+          "similarity": 0.7487
+        }
+      ],
+      "nliStatus": "uncertain",
+      "nliLabel": "neutral",
+      "nliReason": null,
+      "answerPreview": "Yes, GitHub has the right to suspend or terminate your access to all or any part of the website at any time, with or without cause, with or without notice, and effective immediately. Additionally, abu"
+    },
+    "error": null
+  },
+  {
+    "documentName": "GitHub Terms of Service",
+    "documentType": "TERMS",
+    "documentLabel": "Terms of Service",
+    "question": "What responsibilities do I have as a user?",
+    "statusCode": 200,
+    "durationMs": 8217,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 1,
+      "available": true,
+      "evidenceCount": 4,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_139",
+          "section": "Section on Page 1",
+          "snippet": "You are responsible for all content posted and activity that occurs under your Account (even when content is posted by o",
+          "similarity": 0.5413
+        },
+        {
+          "clauseId": "clause_127",
+          "section": "Section on Page 1",
+          "snippet": "Short version: Personal Accounts and Organizations have different administrative controls; a human must create your Acco",
+          "similarity": 0.4818
+        },
+        {
+          "clauseId": "clause_138",
+          "section": "4. Account Security",
+          "snippet": "You are responsible for keeping your Account secure while you use our Service. We offer tools such as two-factor authent",
+          "similarity": 0.4711
+        },
+        {
+          "clauseId": "clause_151",
+          "section": "1. Responsibility for User-Generated Content",
+          "snippet": "You are responsible for Your Content and any harm resulting from it. This includes Content you post, upload, or make ava",
+          "similarity": 0.4322
+        }
+      ],
+      "nliStatus": "uncertain",
+      "nliLabel": "neutral",
+      "nliReason": null,
+      "answerPreview": "As a user, you are responsible for all content posted and activity that occurs under your account (including content posted by others who have accounts under your account). You alone are responsible f"
+    },
+    "error": null
+  },
+  {
+    "documentName": "GitHub Terms of Service",
+    "documentType": "TERMS",
+    "documentLabel": "Terms of Service",
+    "question": "Does GitHub provide insurance for cryptocurrency lost in smart contract vulnerabilities?",
+    "statusCode": 200,
+    "durationMs": 32125,
+    "success": true,
+    "qa": {
+      "grounded": false,
+      "confidence": 0,
+      "available": true,
+      "evidenceCount": 0,
+      "evidenceClauses": [],
+      "nliStatus": "uncertain",
+      "nliLabel": "neutral",
+      "nliReason": "insufficient_evidence_unanswered",
+      "answerPreview": "Unable to generate an AI answer. Please review the provided Terms of Service evidence directly."
+    },
+    "error": null
+  },
+  {
+    "documentName": "GitHub Privacy Statement",
+    "documentType": "PRIVACY",
+    "documentLabel": "Privacy Policy",
+    "question": "What personal information does GitHub collect?",
+    "statusCode": 200,
+    "durationMs": 10206,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 1,
+      "available": true,
+      "evidenceCount": 3,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_96",
+          "section": "Section on Page 1",
+          "snippet": "Account Data: We collect certain information when you open an account such as your GitHub handle, name, email address, p",
+          "similarity": 0.7838
+        },
+        {
+          "clauseId": "clause_97",
+          "section": "Section on Page 1",
+          "snippet": "User Content and Files: When you use our Services, we collect Personal Data included as part of the information you prov",
+          "similarity": null
+        },
+        {
+          "clauseId": "clause_115",
+          "section": "Section on Page 1",
+          "snippet": "Services you linked to your GitHub account: When you or your administrator integrate third-party apps or services with o",
+          "similarity": 0.7983
+        }
+      ],
+      "nliStatus": "uncertain",
+      "nliLabel": "neutral",
+      "nliReason": null,
+      "answerPreview": "GitHub collects Account Data such as your GitHub handle, name, email address, password, payment information, and transaction information. They also collect User Content and Files including code, input"
+    },
+    "error": null
+  },
+  {
+    "documentName": "GitHub Privacy Statement",
+    "documentType": "PRIVACY",
+    "documentLabel": "Privacy Policy",
+    "question": "What information is shared with third parties?",
+    "statusCode": 200,
+    "durationMs": 12549,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 1,
+      "available": true,
+      "evidenceCount": 3,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_206",
+          "section": "Section on Page 1",
+          "snippet": "We and/or our partners also share the information we collect or infer with third parties for these purposes.",
+          "similarity": 0.7511
+        },
+        {
+          "clauseId": "clause_142",
+          "section": "Section on Page 1",
+          "snippet": "Other Third-party Applications: Upon your instruction, we may share Personal Data with third-party applications availabl",
+          "similarity": 0.6326
+        },
+        {
+          "clauseId": "clause_250",
+          "section": "Section on Page 1",
+          "snippet": "We disclosed the following categories of personal information for a business purpose in the last 12 months: identifiers/",
+          "similarity": 0.6175
+        }
+      ],
+      "nliStatus": "supported",
+      "nliLabel": "entailment",
+      "nliReason": null,
+      "answerPreview": "The information shared with third parties includes the information the company collects or infers, as well as specific categories of personal information such as identifiers/contact information, demog"
+    },
+    "error": null
+  },
+  {
+    "documentName": "GitHub Privacy Statement",
+    "documentType": "PRIVACY",
+    "documentLabel": "Privacy Policy",
+    "question": "How can I request deletion of my data?",
+    "statusCode": 200,
+    "durationMs": 18734,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 1,
+      "available": true,
+      "evidenceCount": 2,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_235",
+          "section": "Section on Page 1",
+          "snippet": "Right to request Deletion: You reserve the right to request the deletion of your data, barring a few exceptions. Such ex",
+          "similarity": 0.725
+        },
+        {
+          "clauseId": "clause_242",
+          "section": "Section on Page 1",
+          "snippet": "To make an access, deletion, correction, or opt-out request, please send an email to privacy[at]github[dot]com and follo",
+          "similarity": 0.4353
+        }
+      ],
+      "nliStatus": "supported",
+      "nliLabel": "entailment",
+      "nliReason": null,
+      "answerPreview": "To request deletion of your data, you can send an email to privacy@github.com and follow the instructions provided. Your identity may need to be verified before your request is processed. If you use a"
+    },
+    "error": null
+  },
+  {
+    "documentName": "Spotify Paid Subscription Terms",
+    "documentType": "TERMS",
+    "documentLabel": "Paid Subscription Terms",
+    "question": "How can I cancel my paid subscription?",
+    "statusCode": 200,
+    "durationMs": 4655,
+    "success": true,
+    "qa": {
+      "grounded": false,
+      "confidence": 0,
+      "available": true,
+      "evidenceCount": 0,
+      "evidenceClauses": [],
+      "nliStatus": "uncertain",
+      "nliLabel": "neutral",
+      "nliReason": "insufficient_evidence_unanswered",
+      "answerPreview": "Unable to generate an AI answer. Please review the provided Paid Subscription Terms evidence directly."
+    },
+    "error": null
+  },
+  {
+    "documentName": "Spotify Paid Subscription Terms",
+    "documentType": "TERMS",
+    "documentLabel": "Paid Subscription Terms",
+    "question": "What happens after cancellation?",
+    "statusCode": 200,
+    "durationMs": 5539,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 1,
+      "available": true,
+      "evidenceCount": 4,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_13",
+          "section": "Section on Page 1",
+          "snippet": "CERTAIN PAID SUBSCRIPTIONS CONTINUE INDEFINITELY AND YOU WILL CONTINUE TO BE CHARGED THE RECURRING SUBSCRIPTION FEE AS A",
+          "similarity": 0.5517
+        },
+        {
+          "clauseId": "clause_55",
+          "section": "Section on Page 1",
+          "snippet": "You may cancel your Paid Subscription at any time by logging into your Spotify account and following the prompts on the ",
+          "similarity": 0.5047
+        },
+        {
+          "clauseId": "clause_70",
+          "section": "Section on Page 1",
+          "snippet": "Unless otherwise stated, for example elsewhere in these Terms or in connection with an offer or Trial including during t",
+          "similarity": 0.5034
+        },
+        {
+          "clauseId": "clause_34",
+          "section": "Section on Page 1",
+          "snippet": "If the Primary Account Holder cancels the Household Paid Subscription or the account is otherwise suspended or terminate",
+          "similarity": 0.4752
+        }
+      ],
+      "nliStatus": "supported",
+      "nliLabel": "entailment",
+      "nliReason": null,
+      "answerPreview": "Unless otherwise indicated, cancellation will take effect from the end of the billing period in which you cancel, and you will continue to be charged until you cancel your account. If you cancel a Tri"
+    },
+    "error": null
+  },
+  {
+    "documentName": "Spotify Paid Subscription Terms",
+    "documentType": "TERMS",
+    "documentLabel": "Paid Subscription Terms",
+    "question": "Are payments refundable?",
+    "statusCode": 200,
+    "durationMs": 18049,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 0.9,
+      "available": true,
+      "evidenceCount": 1,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_42",
+          "section": "Section on Page 1",
+          "snippet": "H. Note; If you are a holder of a Single-user Paid Subscription account, by joining a Household Paid Subscription as a S",
+          "similarity": 0.4173
+        }
+      ],
+      "nliStatus": "uncertain",
+      "nliLabel": "neutral",
+      "nliReason": null,
+      "answerPreview": "According to the evidence, if you are a holder of a Single-user Paid Subscription account and you change to a Household Paid Subscription before the end of your then-current period, no refunds are ava"
+    },
+    "error": null
+  },
+  {
+    "documentName": "Spotify Paid Subscription Terms",
+    "documentType": "TERMS",
+    "documentLabel": "Paid Subscription Terms",
+    "question": "Can I cancel my subscription and get a refund?",
+    "statusCode": 200,
+    "durationMs": 18083,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 0.9,
+      "available": true,
+      "evidenceCount": 2,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_55",
+          "section": "Section on Page 1",
+          "snippet": "You may cancel your Paid Subscription at any time by logging into your Spotify account and following the prompts on the ",
+          "similarity": 0.6577
+        },
+        {
+          "clauseId": "clause_42",
+          "section": "Section on Page 1",
+          "snippet": "H. Note; If you are a holder of a Single-user Paid Subscription account, by joining a Household Paid Subscription as a S",
+          "similarity": 0.6355
+        }
+      ],
+      "nliStatus": "uncertain",
+      "nliLabel": "neutral",
+      "nliReason": null,
+      "answerPreview": "You can cancel your Paid Subscription at any time, and unless otherwise indicated, cancellation will take effect from the end of the billing period in which you cancel. However, the evidence specifica"
+    },
+    "error": null
+  },
+  {
+    "documentName": "Spotify Privacy Policy",
+    "documentType": "PRIVACY",
+    "documentLabel": "Privacy Policy",
+    "question": "What personal information does Spotify share?",
+    "statusCode": 200,
+    "durationMs": 19102,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 0.8,
+      "available": true,
+      "evidenceCount": 1,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_522",
+          "section": "Section on Page 1",
+          "snippet": "To promote Spotify with our partners. We share certain User Data and Usage Data with these partners where necessary to:",
+          "similarity": 0.774
+        }
+      ],
+      "nliStatus": "uncertain",
+      "nliLabel": "neutral",
+      "nliReason": null,
+      "answerPreview": "The provided Privacy Policy evidence mentions that Spotify shares certain User Data and Usage Data with partners to promote Spotify with them, but it does not provide a complete list or detailed break"
+    },
+    "error": null
+  },
+  {
+    "documentName": "Spotify Privacy Policy",
+    "documentType": "PRIVACY",
+    "documentLabel": "Privacy Policy",
+    "question": "For what purposes is personal data processed?",
+    "statusCode": 200,
+    "durationMs": 19247,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 0.9,
+      "available": true,
+      "evidenceCount": 4,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_278",
+          "section": "Section on Page 1",
+          "snippet": "our purpose for processing your personal data",
+          "similarity": 0.8316
+        },
+        {
+          "clauseId": "clause_288",
+          "section": "Section on Page 1",
+          "snippet": "Purpose for processing your data",
+          "similarity": 0.7771
+        },
+        {
+          "clauseId": "clause_292",
+          "section": "Section on Page 1",
+          "snippet": "For example, when we use your personal data to:",
+          "similarity": 0.7585
+        },
+        {
+          "clauseId": "clause_354",
+          "section": "Section on Page 1",
+          "snippet": "For example, when we use your personal data to tailor advertising to your interests.",
+          "similarity": 0.7169
+        }
+      ],
+      "nliStatus": "supported",
+      "nliLabel": "entailment",
+      "nliReason": null,
+      "answerPreview": "Personal data is processed for purposes such as tailoring advertising to your interests."
+    },
+    "error": null
+  },
+  {
+    "documentName": "Spotify Privacy Policy",
+    "documentType": "PRIVACY",
+    "documentLabel": "Privacy Policy",
+    "question": "What privacy choices are available?",
+    "statusCode": 200,
+    "durationMs": 18936,
+    "success": true,
+    "qa": {
+      "grounded": true,
+      "confidence": 1,
+      "available": true,
+      "evidenceCount": 1,
+      "evidenceClauses": [
+        {
+          "clauseId": "clause_575",
+          "section": "Section on Page 1",
+          "snippet": "You can also delete certain personal data directly from the Spotify Service: for example, you can edit or delete your pr",
+          "similarity": null
+        }
+      ],
+      "nliStatus": "uncertain",
+      "nliLabel": "neutral",
+      "nliReason": null,
+      "answerPreview": "Based on the provided privacy policy evidence, available privacy choices and controls include deleting certain personal data directly from the Spotify Service (such as editing or deleting your profile"
+    },
+    "error": null
+  },
+  {
+    "documentName": "Edge Case: Invalid Empty Question",
+    "question": "  ",
+    "statusCode": 400,
+    "expectedStatus": 400,
+    "success": false,
+    "error": "A valid question is required."
+  }
+]

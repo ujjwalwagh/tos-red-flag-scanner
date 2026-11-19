@@ -229,6 +229,13 @@ export function analyzeClauseDifferences(oldText, newText, options = {}) {
   }
 
   // 5. Stylistic Paraphrasing (Synonym swaps preserving warranties and representations)
+  const durationsPreA = extractDurations(oldLower);
+  const durationsPreB = extractDurations(newLower);
+  const hasDurationShift = durationsPreA.length > 0 && durationsPreB.length > 0 && durationsPreA[0].days !== durationsPreB[0].days;
+  const currenciesPreA = extractCurrencies(oldLower);
+  const currenciesPreB = extractCurrencies(newLower);
+  const hasCurrencyShift = currenciesPreA.length > 0 && currenciesPreB.length > 0 && currenciesPreA[0].val !== currenciesPreB[0].val;
+
   const isParaphraseWarrant = (
     (/\b(represent and warrant|represent and confirm|warrant that|confirm that)\b/.test(oldLower)) &&
     (/\b(represent and warrant|represent and confirm|warrant that|confirm that)\b/.test(newLower)) &&
@@ -236,7 +243,7 @@ export function analyzeClauseDifferences(oldText, newText, options = {}) {
     (/\b(licenses|rights|submitted|submissions|publish)\b/.test(newLower)) &&
     !newLower.includes("waive") && !newLower.includes("moral rights")
   );
-  if (isParaphraseWarrant || (semanticSim !== null && semanticSim >= 0.90 && !newLower.includes("arbitration") && !newLower.includes("waive"))) {
+  if (isParaphraseWarrant || (!hasDurationShift && !hasCurrencyShift && semanticSim !== null && semanticSim >= 0.90 && !newLower.includes("arbitration") && !newLower.includes("waive"))) {
     return {
       available: true,
       method: semanticSim !== null ? "semantic_embedding" : "deterministic_engine",
@@ -687,8 +694,8 @@ export async function compareClauses(params, options = {}) {
     };
   }
 
-  // 3. Optional dense embeddings when available in background without hard requirement
-  if (!explicitNullProvider && client && client.enabled) {
+  // 3. Optional dense embeddings when available in background without hard requirement and no explicit provider
+  if (!options.provider && !explicitNullProvider && client && client.enabled) {
     try {
       const semanticRes = await client.compareClausesSemantic(oldText, newText);
       if (semanticRes.success && typeof semanticRes.similarityScore === "number") {
@@ -725,8 +732,8 @@ export async function compareClauses(params, options = {}) {
     };
   }
 
-  // 4. Live AI Provider (Gemini / LLM) Call
-  if (provider && provider.name !== "null" && provider.apiKey) {
+  // 4. Live AI Provider (Gemini / LLM) Call (when explicitly configured or provided)
+  if (options.provider && provider && provider.name !== "null" && provider.apiKey) {
     try {
       const prompt = buildComparisonPrompt(oldText, newText);
       const result = await provider.analyzeClause({

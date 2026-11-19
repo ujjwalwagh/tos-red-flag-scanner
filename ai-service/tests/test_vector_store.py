@@ -223,3 +223,141 @@ def test_validation_duplicate_clause_id():
     res = client.post("/ai/vectors/index", json={"document_id": TEST_DOC_1, "clauses": dup_clauses})
     assert res.status_code == 400
     assert "duplicate" in res.json().get("detail", "").lower()
+
+
+def test_batch_chunking_boundaries_and_embedding_limit(monkeypatch):
+    """Verify boundaries (1, 99, 100, 101, 111, 250, 500) and ensure no embed_batch call exceeds 100."""
+    original_embed_batch = vector_store_service.embedding_service.embed_batch
+    observed_batch_sizes = []
+
+    def tracking_embed_batch(texts):
+        observed_batch_sizes.append(len(texts))
+        assert len(texts) <= 100, f"Batch size {len(texts)} exceeded MAX_BATCH_SIZE (100)!"
+        return original_embed_batch(texts)
+
+    monkeypatch.setattr(vector_store_service.embedding_service, "embed_batch", tracking_embed_batch)
+
+    # Test boundary counts: 1, 99, 100, 101, 111, 250, 400, 401, 500, 501, 600, 693, 1000
+    for count in [1, 99, 100, 101, 111, 250, 400, 401, 500, 501, 600, 693, 1000]:
+        doc_id = f"test-boundary-{count}"
+        observed_batch_sizes.clear()
+        clauses = [
+            {
+                "clause_id": f"c_{count}_{i}",
+                "text": f"This is test clause text number {i} for boundary validation count {count}.",
+                "category": "boundary_test",
+                "section": f"Section {i // 10}"
+            }
+            for i in range(count)
+        ]
+        res = vector_store_service.index_clauses(doc_id, clauses)
+        assert res["status"] == "success"
+        assert res["indexed_count"] == count
+
+        # Verify no batch exceeded 100
+        assert all(size <= 100 for size in observed_batch_sizes)
+        assert sum(observed_batch_sizes) == count
+
+        # Cleanup
+        vector_store_service.delete_analysis_store(doc_id)
+
+
+def test_indexing_integrity_across_batches():
+    """Verify that all clause IDs and metadata survive batching without corruption or loss."""
+    doc_id = "test-integrity-111"
+    clauses = [
+        {
+            "clause_id": f"clause_{i}",
+            "text": f"Policy clause body {i}: You may cancel your subscription at any time." if i == 77 else f"Policy clause body {i}: Standard terms and provisions.",
+            "category": "cancellation" if i == 77 else "general",
+            "section": "3. Payment; Cancellation" if i == 77 else "General Terms"
+        }
+        for i in range(111)
+    ]
+
+    res = vector_store_service.index_clauses(doc_id, clauses)
+    assert res["status"] == "success"
+    assert res["indexed_count"] == 111
+
+    # Query for the specific cancellation clause in batch 1 (index 77)
+    results = vector_store_service.query(doc_id, "Can I cancel my subscription?", top_k=5)
+    assert len(results) > 0
+    top_ids = [r["clause_id"] for r in results]
+    assert "clause_77" in top_ids
+
+    # Query a clause from batch 2 (index 105)
+    query_b2 = vector_store_service.query(doc_id, "Policy clause body 105", top_k=3)
+    assert len(query_b2) > 0
+    assert query_b2[0]["clause_id"] == "clause_105"
+    assert query_b2[0]["section"] == "General Terms"
+
+    vector_store_service.delete_analysis_store(doc_id)
+
+
+def test_indexing_failure_atomic(monkeypatch):
+    """Verify that if any batch fails, indexing does not report success."""
+    doc_id = "test-fail-atomic"
+    clauses = [
+        {"clause_id": f"c_{i}", "text": f"Clause {i} content text."}
+        for i in range(150)
+    ]
+
+    call_count = 0
+    def failing_embed_batch(texts):
+        nonlocal call_count
+        call_count += 1
+        if call_count > 1:
+            raise RuntimeError("Simulated embedding service error on second batch")
+        return vector_store_service.embedding_service._get_model().encode(texts, convert_to_numpy=True).tolist()
+
+    monkeypatch.setattr(vector_store_service.embedding_service, "embed_batch", failing_embed_batch)
+
+    with pytest.raises(RuntimeError, match="Simulated embedding service error"):
+        vector_store_service.index_clauses(doc_id, clauses)
+
+
+def test_rejection_over_1000_clauses():
+    """Verify rejection when clauses collection exceeds MAX_BATCH_CLAUSES (1000)."""
+    doc_id = "test-over-1000"
+    clauses = [
+        {"clause_id": f"c_{i}", "text": f"Clause {i} content."}
+        for i in range(1001)
+    ]
+    with pytest.raises(ValueError, match="exceeds maximum allowed of 1000"):
+        vector_store_service.index_clauses(doc_id, clauses)
+
+
+def test_api_rejection_over_1000_clauses():
+    """Verify HTTP POST /ai/vectors/index rejects payload exceeding 1,000 clauses."""
+    clauses = [{"clause_id": f"c_{i}", "text": f"Clause {i} text."} for i in range(1001)]
+    res = client.post("/ai/vectors/index", json={"document_id": "test-over-1000", "clauses": clauses})
+    assert res.status_code in (400, 422)
+
+
+def test_similarity_score_field_names_and_precision():
+    """Phase 7G-D.8: Verify vector retrieval returns normalized similarity fields."""
+    doc_id = "test-similarity-fields"
+    vector_store_service.index_clauses(doc_id, SAMPLE_CLAUSES)
+    try:
+        results = vector_store_service.query(doc_id, "subscription cancellation", top_k=2)
+        assert len(results) > 0
+        top = results[0]
+        # All three field naming conventions must be present and hold identical genuine float scores
+        assert "similarity" in top
+        assert "similarity_score" in top
+        assert "similarityScore" in top
+        assert isinstance(top["similarity"], float)
+        assert top["similarity"] == top["similarity_score"]
+        assert top["similarity"] == top["similarityScore"]
+        assert -1.0 <= top["similarity"] <= 1.0
+
+        # Also verify HTTP endpoint returns all three fields
+        res = client.post("/ai/vectors/query", json={"document_id": doc_id, "query": "subscription", "top_k": 1})
+        assert res.status_code == 200
+        http_top = res.json()["results"][0]
+        assert http_top["similarity"] == http_top["similarity_score"]
+        assert http_top["similarity"] == http_top["similarityScore"]
+    finally:
+        vector_store_service.delete_analysis_store(doc_id)
+
+

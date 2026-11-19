@@ -23,28 +23,85 @@
 import { config } from "../config/env.js";
 
 const DEFAULT_TIMEOUT_MS = 5000;
+const DEFAULT_NLI_TIMEOUT_MS = 15000;
 const DEFAULT_BASE_URL = "http://localhost:8000";
 const CIRCUIT_BREAKER_THRESHOLD = 3;
 const CIRCUIT_BREAKER_COOLDOWN_MS = 10000; // 10 seconds
 
 export class PythonAiClient {
   /**
+   * Helper to parse and validate timeout integers safely.
+   * @param {any} val
+   * @param {number} fallback
+   * @returns {number}
+   */
+  static parseTimeout(val, fallback) {
+    if (val === undefined || val === null || String(val).trim() === "") return fallback;
+    const num = Number(val);
+    if (!Number.isFinite(num) || num <= 0) return fallback;
+    return Math.floor(num);
+  }
+
+  /**
    * @param {Object} [options={}]
-   * @param {string} [options.baseUrl]   - Python service base URL
-   * @param {number} [options.timeoutMs] - Request timeout in milliseconds
-   * @param {boolean} [options.enabled]  - Feature flag to toggle Python AI calls
+   * @param {string} [options.baseUrl]      - Python service base URL
+   * @param {number} [options.timeoutMs]    - Request timeout in milliseconds (embeddings/vectors)
+   * @param {number} [options.nliTimeoutMs] - Dedicated timeout for NLI validation
+   * @param {boolean} [options.enabled]     - Feature flag to toggle Python AI calls
    */
   constructor(options = {}) {
     this.baseUrl = (options.baseUrl || config?.pythonAi?.baseUrl || DEFAULT_BASE_URL).replace(/\/+$/, "");
-    this.timeoutMs = Number(options.timeoutMs || config?.pythonAi?.timeoutMs || DEFAULT_TIMEOUT_MS);
+    this.timeoutMs = PythonAiClient.parseTimeout(
+      options.timeoutMs ?? config?.pythonAi?.timeoutMs,
+      DEFAULT_TIMEOUT_MS
+    );
+    this.nliTimeoutMs = PythonAiClient.parseTimeout(
+      options.nliTimeoutMs ?? config?.pythonAi?.nliTimeoutMs,
+      DEFAULT_NLI_TIMEOUT_MS
+    );
     this.enabled = options.enabled !== undefined
       ? Boolean(options.enabled)
       : (config?.pythonAi?.enabled !== undefined ? Boolean(config.pythonAi.enabled) : true);
+    this.internalToken = (
+      options.internalToken !== undefined
+        ? options.internalToken
+        : (config?.pythonAi?.internalToken || "")
+    )?.trim() || "";
 
     // Circuit breaker state
     this.consecutiveFailures = 0;
     this.cooldownUntil = 0;
     this.lastChecked = null;
+  }
+
+  /**
+   * Node.js custom inspection hook preventing raw internalToken leakage in console/debug logs.
+   */
+  [Symbol.for("nodejs.util.inspect.custom")]() {
+    return {
+      baseUrl: this.baseUrl,
+      enabled: this.enabled,
+      timeoutMs: this.timeoutMs,
+      nliTimeoutMs: this.nliTimeoutMs,
+      hasInternalToken: Boolean(this.internalToken),
+      circuitClosed: this.isCircuitClosed(),
+      consecutiveFailures: this.consecutiveFailures
+    };
+  }
+
+  /**
+   * Returns a sanitized view of client settings with raw token redacted.
+   * @returns {Object}
+   */
+  getSanitizedConfig() {
+    return {
+      baseUrl: this.baseUrl,
+      enabled: this.enabled,
+      timeoutMs: this.timeoutMs,
+      nliTimeoutMs: this.nliTimeoutMs,
+      hasInternalToken: Boolean(this.internalToken),
+      circuitClosed: this.isCircuitClosed()
+    };
   }
 
   /**
@@ -79,10 +136,10 @@ export class PythonAiClient {
   }
 
   /**
-   * Internal HTTP request helper with timeout and error handling.
+   * Internal HTTP request helper with timeout, token injection, and error handling.
    * @private
    */
-  async _request(path, method = "GET", body = null) {
+  async _request(path, method = "GET", body = null, timeoutMs = null, customHeaders = null) {
     if (!this.isCircuitClosed()) {
       return {
         success: false,
@@ -95,10 +152,21 @@ export class PythonAiClient {
 
     const url = `${this.baseUrl}${path}`;
     const headers = { "Content-Type": "application/json" };
+
+    // Attach server-side internal service token to protected routes (Phase 8C.3E)
+    const isPublicPath = path === "/health" || path === "/health/";
+    if (!isPublicPath && this.internalToken && typeof this.internalToken === "string" && this.internalToken.trim() !== "") {
+      headers["X-Internal-Token"] = this.internalToken.trim();
+    }
+    if (customHeaders && typeof customHeaders === "object") {
+      Object.assign(headers, customHeaders);
+    }
+
+    const effectiveTimeout = Number(timeoutMs) > 0 ? Number(timeoutMs) : this.timeoutMs;
     const options = {
       method,
       headers,
-      signal: AbortSignal.timeout(this.timeoutMs)
+      signal: AbortSignal.timeout(effectiveTimeout)
     };
 
     if (body !== null && method !== "GET" && method !== "HEAD") {
@@ -243,31 +311,48 @@ export class PythonAiClient {
     if (!Array.isArray(clauses) || clauses.length === 0) {
       return { success: false, error: "clauses must be a non-empty array." };
     }
-
-    const payload = {
-      document_id: documentId.trim(),
-      clauses: clauses.map((c, idx) => ({
-        clause_id: String(c.clause_id || c.clauseId || `c_${idx}`).trim(),
-        text: String(c.text || c.rawText || "").trim(),
-        category: String(c.category || c.categoryId || "general").trim(),
-        section: String(c.section || c.title || "").trim()
-      }))
-    };
-
-    const res = await this._request("/ai/vectors/index", "POST", payload);
-    if (res.success && res.data?.status === "success") {
+    if (clauses.length > 1000) {
       return {
-        success: true,
-        documentId: res.data.document_id,
-        indexedCount: res.data.indexed_count
+        success: false,
+        error: "Document clause count exceeds the maximum limit of 1,000 clauses for Q&A analysis."
       };
     }
 
+    const docId = documentId.trim();
+    const formattedClauses = clauses.map((c, idx) => ({
+      clause_id: String(c.clause_id || c.clauseId || `c_${idx}`).trim(),
+      text: String(c.text || c.rawText || "").trim(),
+      category: String(c.category || c.categoryId || "general").trim(),
+      section: String(c.section || c.title || "").trim()
+    }));
+
+    const CHUNK_SIZE = 400;
+    let totalIndexed = 0;
+
+    for (let i = 0; i < formattedClauses.length; i += CHUNK_SIZE) {
+      const chunk = formattedClauses.slice(i, i + CHUNK_SIZE);
+      const payload = {
+        document_id: docId,
+        clauses: chunk
+      };
+
+      const res = await this._request("/ai/vectors/index", "POST", payload);
+      if (!res.success || res.data?.status !== "success") {
+        await this.deleteDocumentVectors(docId).catch(() => {});
+        return {
+          success: false,
+          error: res.error || "failed_to_index_vectors",
+          status: res.status,
+          isTimeout: Boolean(res.isTimeout)
+        };
+      }
+      totalIndexed += (res.data.indexed_count || chunk.length);
+    }
+
     return {
-      success: false,
-      error: res.error || "failed_to_index_vectors",
-      status: res.status,
-      isTimeout: Boolean(res.isTimeout)
+      success: true,
+      documentId: docId,
+      indexedCount: totalIndexed
     };
   }
 
@@ -411,6 +496,144 @@ export class PythonAiClient {
       success: true,
       available: true,
       similarityScore: similarity
+    };
+  }
+  /**
+   * Validates a generated Q&A answer against evidence clauses using DeBERTa-v3 NLI.
+   * POST /ai/nli/validate
+   *
+   * @param {string} answer - The generated answer/hypothesis text
+   * @param {Array<Object>} evidenceClauses - Array of evidence clauses [{ text, clauseId/clause_id }]
+   * @param {Object} [options={}] - Optional request options (e.g. timeoutMs)
+   * @returns {Promise<{
+   *   success: boolean,
+   *   available: boolean,
+   *   isSupported?: boolean,
+   *   status?: string,
+   *   label?: string,
+   *   scores?: { entailment: number, neutral: number, contradiction: number },
+   *   bestClauseId?: string|null,
+   *   evaluatedCount?: number,
+   *   error?: string,
+   *   isTimeout?: boolean
+   * }>}
+   */
+  async validateNli(answer, evidenceClauses, options = {}) {
+    if (typeof answer !== "string" || !answer.trim()) {
+      return {
+        success: false,
+        available: false,
+        error: "invalid_answer_input",
+        status: "unavailable"
+      };
+    }
+
+    if (!Array.isArray(evidenceClauses) || evidenceClauses.length === 0) {
+      return {
+        success: false,
+        available: false,
+        error: "invalid_evidence_input",
+        status: "unavailable"
+      };
+    }
+
+    const cleanedClauses = [];
+    for (let i = 0; i < evidenceClauses.length; i++) {
+      const c = evidenceClauses[i];
+      const text = typeof c === "string" ? c.trim() : String(c?.text || c?.rawText || "").trim();
+      if (!text) {
+        return {
+          success: false,
+          available: false,
+          error: "invalid_evidence_clause_text",
+          status: "unavailable"
+        };
+      }
+      cleanedClauses.push({
+        text,
+        clause_id: c?.clauseId || c?.clause_id ? String(c.clauseId || c.clause_id).trim() : null
+      });
+    }
+
+    const payload = {
+      answer: answer.trim(),
+      evidence: cleanedClauses
+    };
+
+    const rawTimeout = options?.timeoutMs !== undefined ? options.timeoutMs : this.nliTimeoutMs;
+    const timeout = PythonAiClient.parseTimeout(rawTimeout, this.nliTimeoutMs || DEFAULT_NLI_TIMEOUT_MS);
+    const res = await this._request("/ai/nli/validate", "POST", payload, timeout);
+
+    if (res.success && res.data && typeof res.data === "object") {
+      const d = res.data;
+      const validSupported = typeof d.is_supported === "boolean";
+      const validStatus = typeof d.status === "string";
+      const validScores = typeof d.scores === "object" && d.scores !== null &&
+        typeof d.scores.entailment === "number" &&
+        typeof d.scores.neutral === "number" &&
+        typeof d.scores.contradiction === "number";
+
+      if (validSupported && validStatus && validScores) {
+        let clauseEvaluations = null;
+        if (Array.isArray(d.clause_evaluations)) {
+          clauseEvaluations = d.clause_evaluations.map((item) => ({
+            clauseId: item?.clause_id ? String(item.clause_id) : null,
+            label: String(item?.label || ""),
+            scores: item?.scores && typeof item.scores === "object" ? {
+              entailment: Number(item.scores.entailment) || 0,
+              neutral: Number(item.scores.neutral) || 0,
+              contradiction: Number(item.scores.contradiction) || 0
+            } : null
+          }));
+        }
+
+        let compositeEvaluation = null;
+        if (d.composite_evaluation && typeof d.composite_evaluation === "object") {
+          const compScores = d.composite_evaluation.scores;
+          compositeEvaluation = {
+            label: String(d.composite_evaluation.label || ""),
+            scores: compScores && typeof compScores === "object" ? {
+              entailment: Number(compScores.entailment) || 0,
+              neutral: Number(compScores.neutral) || 0,
+              contradiction: Number(compScores.contradiction) || 0
+            } : null
+          };
+        }
+
+        return {
+          success: true,
+          available: true,
+          isSupported: d.is_supported,
+          status: d.status,
+          label: typeof d.label === "string" ? d.label : null,
+          scores: {
+            entailment: d.scores.entailment,
+            neutral: d.scores.neutral,
+            contradiction: d.scores.contradiction
+          },
+          bestClauseId: typeof d.best_clause_id === "string" ? d.best_clause_id : null,
+          evaluatedCount: Number(d.evaluated_clauses_count) || cleanedClauses.length,
+          clauseEvaluations,
+          compositeEvaluation,
+          reason: typeof d.reason === "string" ? d.reason : null
+        };
+      }
+
+      this.recordFailure("malformed_nli_response");
+      return {
+        success: false,
+        available: false,
+        error: "malformed_nli_response",
+        status: "unavailable"
+      };
+    }
+
+    return {
+      success: false,
+      available: false,
+      error: res.error || "nli_service_failed",
+      isTimeout: Boolean(res.isTimeout),
+      status: "unavailable"
     };
   }
 }

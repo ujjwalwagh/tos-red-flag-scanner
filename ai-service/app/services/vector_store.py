@@ -13,11 +13,11 @@ import chromadb
 from chromadb.api import ClientAPI
 
 from app.config import settings
-from app.services.embedding_service import embedding_service, EmbeddingService
+from app.services.embedding_service import embedding_service, EmbeddingService, MAX_BATCH_SIZE
 
 MAX_DOCUMENT_ID_LENGTH = 64
 MAX_CLAUSE_TEXT_LENGTH = 50000
-MAX_BATCH_CLAUSES = 500
+MAX_BATCH_CLAUSES = 1000
 MAX_TOP_K = 50
 DEFAULT_TOP_K = 3
 
@@ -124,8 +124,13 @@ class VectorStoreService:
                 "order": idx
             })
 
-        # Reuse existing singleton embedding engine
-        embeddings = self.embedding_service.embed_batch(texts)
+        # Reuse existing singleton embedding engine with safe chunked batching (MAX_BATCH_SIZE = 100)
+        embeddings: List[List[float]] = []
+        embedding_batch_limit = min(MAX_BATCH_SIZE, 100)
+        for i in range(0, len(texts), embedding_batch_limit):
+            chunk = texts[i:i + embedding_batch_limit]
+            chunk_embeddings = self.embedding_service.embed_batch(chunk)
+            embeddings.extend(chunk_embeddings)
 
         # Store in document-scoped collection
         collection = self.create_analysis_store(valid_id)
@@ -195,6 +200,8 @@ class VectorStoreService:
                     "section": meta.get("section", ""),
                     "order": meta.get("order", 0),
                     "similarity": similarity_val,
+                    "similarity_score": similarity_val,
+                    "similarityScore": similarity_val,
                     "distance": round(distance_val, 4)
                 })
 

@@ -1,204 +1,276 @@
-# PrismClause (TOS Red Flag Scanner)
+# TOS Red Flag Scanner (PrismClause)
 
-An AI-based, informational legal-document analysis system for personalized prioritization of Terms of Service clauses, semantic detection of version changes, and evidence-grounded interactive Q&A.
+**TOS Red Flag Scanner** is an AI-powered document intelligence and legal risk analysis platform designed for consumer Terms of Service, Paid Subscription Agreements, and Privacy Policies. It combines high-precision deterministic legal heuristics with semantic vector search (ChromaDB + Sentence Transformers), DeBERTa Natural Language Inference (NLI), and Google Gemini generative AI explanations.
 
-PrismClause operates on a **hybrid Node.js/Express + Python/FastAPI architecture** with an in-memory **zero-retention privacy runtime** (no raw ToS documents or embeddings are permanently stored).
+The system features both an **interactive Web Application** and a **Manifest V3 Chrome Extension** operating on a unified, local-first backend with zero permanent data retention.
 
 ---
 
-## 1. System Architecture Overview
+## 1. Problem Statement
 
-PrismClause combines high-precision deterministic legal heuristics with modern NLP embeddings, vector retrieval, and generative AI explanations:
+Consumer legal agreements are intentionally long, dense, and difficult to comprehend. The average consumer agrees to dozens of contracts yearly—granting broad content licenses, waiving class action rights, consenting to aggressive tracking, and enrolling in automatic renewal subscriptions—without reading or understanding the terms.
 
-- **Frontend (`frontend/public/`)**: Modern Vanilla HTML5, CSS3, and ES6+ JavaScript client providing risk meters, personalized sliders, redline diff visualizers, and an interactive Q&A interface.
-- **Gateway & Business Logic (`backend/`)**: Node.js and Express 5 server orchestrating ingestion, text normalization, clause segmentation, 14-category rule analysis, personalized ranking, and redline diffing.
-- **AI & NLP Microservice (`ai-service/`)**: Python and FastAPI service providing dense embeddings (`sentence-transformers/all-MiniLM-L6-v2`, 384 dimensions) and document-scoped vector retrieval via **ChromaDB**.
-- **Generative AI Layer**: Google Gemini (`gemini-2.5-pro`) providing evidence-grounded plain-English explanations and interactive Q&A constrained strictly to retrieved ToS evidence.
-- **Offline / Local Resilience**: If AI services or API keys are unavailable, the system degrades gracefully to deterministic rule-based analysis and local lexical comparisons without throwing fatal errors.
+Standard LLM solutions suffer from hallucinations, token truncation on 500+ clause documents, and lack of factual verification. **TOS Red Flag Scanner** solves this with a **grounded multi-tier architecture**:
+1. Automatic detection and in-situ extraction of policies directly from live websites.
+2. 14-category deterministic legal risk scoring.
+3. Bounded semantic vector retrieval (up to 1,000 clauses).
+4. Evidence-constrained Gemini Q&A.
+5. Cross-Encoder DeBERTa NLI verification to ensure answers are factually entailed by the original contract text.
 
-```text
-User / Browser Client (http://localhost:3000)
-       │
-       ▼
-Node.js / Express 5 API Gateway (backend/)
-  ├── Deterministic Rule Engine (14 Legal Categories)
-  ├── Personalized Clause Ranker (Dynamic User Concern Weights)
-  ├── Contract Redline Differ & Remediation Generator
-  └── Resilient AI Client Bridge (Circuit Breaker)
-       │
-       ├─────────────────────────────────┐
-       ▼                                 ▼
-Python / FastAPI AI Service (ai-service/)   Google Gemini (gemini-2.5-pro)
-  ├── Sentence-Transformers (all-MiniLM-L6-v2) ├── Evidence-Grounded Explanations
-  └── ChromaDB (Ephemeral Vector Store)        └── Strict-JSON Interactive Q&A
+---
+
+## 2. Key Features
+
+- **Automated Legal Document Discovery:** Scans the active browser tab to identify Terms of Service, Paid Subscription Terms, Privacy Policies, Regional Privacy Links ("Do Not Sell"), and Central Legal Hubs.
+- **In-Place & Isolated Cross-Origin Extraction:** Extracts clean, readable text directly on-page or via isolated background tabs (closed immediately after extraction).
+- **Multi-Document Isolation:** Complete candidate-specific state isolation ensuring Terms, Subscription Terms, and Privacy Policies never share extraction state, risk reports, or Q&A histories.
+- **Deterministic 14-Category Risk Engine:** Instantly evaluates arbitration clauses, liability caps, unilateral modification clauses, auto-renewals, and content licensing.
+- **Readability & Grade-Level Scoring:** Computes Flesch-Kincaid Grade Level and Reading Ease scores for legal transparency.
+- **1,000-Clause Scalability:** Processes massive legal documents (e.g., Spotify Privacy Policy with 642+ clauses) using sequential batch chunking with atomic rollback.
+- **Oversized Document Consent:** Documents exceeding 100,000 characters require explicit user consent for partial scanning, eliminating silent truncation.
+- **Dual-Engine Q&A Orchestration:** Features both a proven procedural RAG pipeline and an advanced **LangChain.js & LangGraph.js State Machine** (`backend/src/rag/`) with structured output validation (`qaAnswerSchema`) and dynamic conditional routing.
+- **At-Most-Once LLM Quota Protection:** Dual-engine integration safeguards prevent duplicate Gemini calls during downstream verification or network failures.
+- **Evidence-Grounded Q&A:** Gemini 2.5 Pro answers questions strictly using retrieved contract clauses.
+- **DeBERTa NLI Verification:** Independent cross-encoder verification (`cross-encoder/nli-deberta-v3-base`) scores entailment, contradiction, and neutrality for every generated answer.
+- **Accurate Vector Similarity Scores:** Formats genuine cosine similarities (`72%`, `67%`) and preserves unscored exception clauses (`Similarity unavailable`) without fabricating 0% scores.
+- **Zero-Retention Privacy:** No raw policy documents, user questions, or embeddings are permanently stored on disk. ChromaDB collections are deleted immediately after each query.
+- **Extension Security Boundary:** Strict sender validation prevents web pages from invoking extension actions or draining Gemini API quotas.
+
+---
+
+## 3. Technology Stack
+
+- **Chrome Extension:** Chrome Manifest V3, ES Modules, `chrome.scripting`, `chrome.storage.session`.
+- **Frontend Web App:** Vanilla HTML5, CSS3 Glassmorphism design system, ES6+ JavaScript.
+- **Backend API Gateway:** Node.js v22+, Express 5, Helmet, Express-Rate-Limit, Axios, Cheerio.
+- **RAG & Agentic Orchestration:** LangChain.js (`@langchain/core`, `@langchain/google-genai`), LangGraph.js (`@langchain/langgraph`), Zod structured schema validation.
+- **AI Microservice:** Python 3.13+, FastAPI, Uvicorn, PyTorch (CPU inference).
+- **Embeddings & Vector Store:** `sentence-transformers/all-MiniLM-L6-v2` (384-dimensional dense vectors), ChromaDB (ephemeral in-memory collections).
+- **NLI Verification:** `cross-encoder/nli-deberta-v3-base` (Sequence classification on CPU).
+- **Generative AI Provider:** Google Gemini API (`gemini-2.5-pro` with automatic flash failover).
+- **Testing:** Node.js native test runner (`node:test`), Pytest.
+
+---
+
+## 4. Architecture Overview
+
+```
+[ Active Webpage DOM ]
+         ▲
+         │ chrome.scripting (On-demand DOM extraction)
+         ▼
+[ Chrome MV3 Extension ] ────────┐
+(popup.js / service-worker.js)   │  HTTP / REST (JSON)
+                                 ▼
+[ Web Application ] ────────► [ Node.js Express Backend ] (127.0.0.1:3000)
+(app.js / index.html)              │  - Ingestion (PDF / URL / Text)
+                                   │  - Deterministic Risk Engine & Readability
+                                   │  - Dual-Engine Q&A Architecture:
+                                   │      ├─ Engine 1: Procedural Pipeline
+                                   │      └─ Engine 2: LangGraph State Machine
+                                   │  - LangChain Model & Prompt Adapter
+                                   │  - Ephemeral Session Manager
+                                   │
+                                   ▼ HTTP / REST (Internal Bridge)
+                             [ Python AI Microservice ] (127.0.0.1:8000)
+                               - FastAPI (Uvicorn)
+                               - Sentence Transformers (all-MiniLM-L6-v2)
+                               - ChromaDB Vector Store (Ephemeral Collections)
+                               - DeBERTa NLI Cross-Encoder (CPU)
 ```
 
 ---
 
-## 2. Monorepo Structure
+## 5. Project Folder Structure
 
 ```text
-d:/TOS red flag scanner/
+D:\TOS red flag scanner/
+├── .env.example                     # Environment configuration template
+├── package.json                     # Root orchestrator & scripts
+├── scripts/
+│   ├── start.js                     # Unified concurrent process manager (npm start)
+│   └── test-all.js                  # Master Node.js test runner
 │
-├── .env.example                                      # Root environment variable template
-├── package.json                                       # Root monorepo orchestrator & scripts
-├── package-lock.json                                  # Monorepo lockfile
-├── README.md                                          # Project documentation & overview
+├── frontend/                        # Web dashboard client
+│   └── public/
+│       ├── index.html               # Main dashboard UI
+│       ├── app.js                   # Web application logic
+│       └── styles.css               # Design system styling
 │
-├── frontend/
-│   └── public/                                        # Production Frontend (Vanilla HTML5/CSS/JS)
-│       ├── index.html                                 # Semantic application shell & Q&A containers
-│       ├── styles.css                                 # Design system tokens & glassmorphism styling
-│       ├── app.js                                     # Authoritative client application controller
-│       ├── logo.svg                                   # Brand vector icon
-│       ├── share-card.svg                             # Social preview card
-│       └── background.mp4                             # Video background (.bg-video: display: none)
-│
-├── backend/
-│   ├── .env.example                                  # Backend environment configuration template
-│   ├── package.json                                   # Backend microservice metadata & scripts
-│   ├── server.js                                      # Express 5 server, CSP, security headers & routing
-│   │
+├── backend/                         # Node.js Express API server (127.0.0.1:3000)
+│   ├── server.js                    # Express application entry point
 │   ├── src/
-│   │   ├── ai/                                        # AI provider adapters (Gemini, NVIDIA, Null) & Python client
-│   │   ├── analysis/                                  # Rule engine, readability, semantic comparator & ranker
-│   │   ├── api/                                       # Route controllers, upload middleware & Q&A handlers
-│   │   ├── architecture/                              # Central document analysis pipeline
-│   │   ├── benchmarks/                                # SaaS & enterprise legal benchmark distributions
-│   │   ├── compliance/                                # Statutory unenforceability auditor (EU, CA, UK, US)
-│   │   ├── config/                                    # Centralized environment loader (env.js)
-│   │   ├── evaluation/                                # Quantitative evaluation framework & datasets
-│   │   │   ├── data/                                  # Curated ranking & change benchmark datasets
-│   │   │   ├── ranking-evaluator.js                   # Precision@5 and Recall@5 benchmark runner
-│   │   │   └── change-evaluator.js                    # Multi-class Macro-F1 benchmark runner
-│   │   ├── ingestion/                                 # PDF magic-byte validation, OCR check & SSRF-safe URL fetcher
-│   │   ├── negotiation/                               # Word-level redline differ & amendment generator
-│   │   ├── portfolio/                                 # Multi-vendor portfolio risk aggregation & matrix comparator
-│   │   ├── processing/                                # Unicode NFKC normalizer & clause segmenter
-│   │   ├── remediation/                               # Opt-out notice generator & action checklist builder
-│   │   ├── reporting/                                 # Markdown, JSON, and printable HTML report exporter
-│   │   ├── security/                                  # AppError class and SSRF URL validator
-│   │   ├── sentinel/                                  # Chronological policy drift calculator & snapshot store
-│   │   └── utils/                                     # Structured JSON audit logging
-│   │
-│   └── tests/                                         # 16 Unit and Integration test suites (195 tests)
+│   │   ├── ai/                      # Gemini adapter, provider factory & Python bridge
+│   │   ├── analysis/                # Deterministic risk engine & readability
+│   │   ├── api/                     # Controllers and routes (/api/scan, /api/analyze/qa)
+│   │   ├── ingestion/               # SSRF-safe URL fetching & PDF text extraction
+│   │   ├── rag/                     # LangChain & LangGraph RAG orchestration (Phase 8B)
+│   │   │   ├── langchain/           # Prompts, schemas (Zod), and ChatGoogle adapter
+│   │   │   └── langgraph/           # State annotation, 6 graph nodes, conditional routing
+│   │   └── security/                # CORS middleware, loopback binding & SSRF validation
+│   └── tests/                       # 33 Node.js test suites (506 passing tests)
 │
-├── ai-service/                                        # Python / FastAPI AI & Vector Microservice
-│   ├── requirements.txt                               # Python dependencies (FastAPI, ChromaDB, Sentence-Transformers)
+├── ai-service/                      # Python FastAPI microservice (127.0.0.1:8000)
 │   ├── app/
-│   │   ├── main.py                                    # FastAPI application & route endpoints
-│   │   ├── config.py                                  # Pydantic v2 application settings
-│   │   ├── schemas/                                   # Request & response data transfer models
-│   │   └── services/
-│   │       ├── embedding_service.py                   # Sentence-Transformers all-MiniLM-L6-v2 singleton
-│   │       └── vector_store.py                        # ChromaDB ephemeral vector store service
-│   └── tests/                                         # Pytest suite (24 tests)
+│   │   ├── main.py                  # FastAPI application entry point & lifespan
+│   │   ├── services/
+│   │   │   ├── embedding_service.py # Sentence Transformers singleton
+│   │   │   ├── vector_store.py      # ChromaDB vector store service
+│   │   │   └── nli_service.py       # DeBERTa-v3 NLI verification engine
+│   │   └── routers/                 # Vector and NLI API endpoints
+│   └── tests/                       # Pytest test suite (61 passing tests)
 │
-├── docs/
-│   ├── architecture.md                                # Authoritative hybrid system architecture specification
-│   ├── ui-ux.md                                       # Complete UI/UX design system & modal behavior guide
-│   ├── api.md                                         # Comprehensive HTTP API reference (including Q&A)
-│   ├── security.md                                    # Threat model, SSRF protection, CSP & security rules
-│   ├── testing.md                                     # Test layout, execution procedures & verification
-│   ├── deployment.md                                  # Production deployment & service guide
-│   └── phases/                                        # Historical milestone documentation (Phases 1–9)
+├── extension/                       # Chrome Manifest V3 Extension
+│   ├── manifest.json                # MV3 extension manifest
+│   ├── background/
+│   │   └── service-worker.js        # Background worker & SEC-EXT-1 sender validation
+│   ├── popup/
+│   │   ├── popup.html               # Extension popup UI
+│   │   ├── popup.js                 # Candidate registry & state management
+│   │   └── popup.css                # Compact extension styling
+│   ├── content/
+│   │   ├── content-script.js        # On-demand legal link detection
+│   │   └── dom-extractor.js         # Substantive text extraction
+│   └── utils/
+│       ├── detector-rules.js        # Detection heuristics & URL canonicalization
+│       └── extractor-core.js        # DOM extraction validation
 │
-└── scripts/
-    ├── start.js                                       # Node.js backend launcher
-    ├── test-all.js                                    # Automated Node.js test runner
-    └── evaluate.js                                    # Academic quantitative evaluation CLI
+└── docs/                            # In-depth architectural & operational guides
+    ├── ARCHITECTURE.md              # Complete technical architecture specification (v3.0)
+    ├── ACADEMIC_ALIGNMENT.md        # Academic alignment, viva defense guide & RAG theory
+    ├── INSTALLATION.md              # Step-by-step Windows setup guide
+    ├── USER_GUIDE.md                # 10-step user guide with feature walkthroughs
+    ├── SECURITY_AND_PRIVACY.md      # Security model, trust boundaries & limitations (v3.0)
+    └── RELEASE_CHECKLIST.md         # Pre-flight release verification checklist
 ```
 
 ---
 
-## 3. Quickstart
+## 6. Prerequisites & Installation
 
-### 3.1 Setup Node.js Backend Gateway
-```bash
-# 1. Install root & backend dependencies
-npm install
+### System Requirements
+- **OS:** Windows 10/11, macOS, or Linux.
+- **Node.js:** v20.0.0 or higher (v22 recommended).
+- **Python:** v3.10 to v3.13 (v3.13 supported).
+- **Browser:** Google Chrome (v115+ for Manifest V3).
+- **Google Gemini API Key:** Required for plain-English explanations and Q&A.
 
-# 2. Configure environment (optional)
-cp .env.example .env
+### Quick Setup
 
-# 3. Start the Express server
+1. **Clone or Navigate to the Repository:**
+   ```powershell
+   cd "D:\TOS red flag scanner"
+   ```
+
+2. **Install Node.js Dependencies:**
+   ```powershell
+   npm install
+   ```
+
+3. **Set Up Python Virtual Environment:**
+   ```powershell
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   pip install -r ai-service/requirements.txt
+   ```
+
+4. **Configure Environment Variables:**
+   Copy `.env.example` to `.env` in the project root:
+   ```powershell
+   Copy-Item .env.example .env
+   ```
+   Edit `.env` and insert your Gemini API key:
+   ```env
+   GEMINI_API_KEY=your_actual_gemini_api_key_here
+   ENABLE_GEMINI_PROVIDER=true
+   PORT=3000
+   ENABLE_PYTHON_AI_SERVICE=true
+   PYTHON_AI_SERVICE_URL=http://localhost:8000
+   ENABLE_LANGGRAPH_QA=false # Feature flag for LangGraph Q&A engine (defaults to false)
+   ```
+
+---
+
+## 7. Starting the Services
+
+Launch both the Node.js backend (Port 3000) and Python AI service (Port 8000) concurrently with a single command:
+
+```powershell
 npm start
 ```
-The web application is accessible at [http://localhost:3000](http://localhost:3000).
 
-### 3.2 Setup Python FastAPI AI Service (Optional for Local Vectors & Embeddings)
-```bash
-cd ai-service
+The unified launcher will:
+- Check for port collisions on 3000 and 8000.
+- Verify the Python virtual environment.
+- Pre-warm the DeBERTa NLI model on CPU.
+- Stream prefixed logs: `[BACKEND]` and `[PYTHON AI]`.
 
-# 1. Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: .\venv\Scripts\activate
+Web Application is available at: [http://localhost:3000](http://localhost:3000)  
+Backend Health Check: [http://localhost:3000/health](http://localhost:3000/health)  
+Python AI Health Check: [http://localhost:8000/health](http://localhost:8000/health)  
 
-# 2. Install Python requirements
-pip install -r requirements.txt
+---
 
-# 3. Run FastAPI microservice
-uvicorn app.main:app --port 8000
+## 8. Installing the Chrome Extension
+
+1. Open Google Chrome and navigate to: `chrome://extensions/`
+2. Enable **Developer mode** via the toggle switch in the top-right corner.
+3. Click the **Load unpacked** button.
+4. Select the `extension` directory inside the project root:
+   ```text
+   D:\TOS red flag scanner\extension
+   ```
+5. Pin the **TOS Red Flag Scanner** icon to your Chrome toolbar.
+6. Open the popup to verify backend connectivity (the status dot will turn green).
+
+---
+
+## 9. User Workflow Guide
+
+1. **Navigate to Any Website:** Open any service with legal agreements (e.g., `https://www.spotify.com`).
+2. **Open Extension:** Click the toolbar icon. The extension displays the active website hostname.
+3. **Find Legal Documents:** Click **Find Legal Documents**. The extension detects Terms of Service, Paid Terms, Privacy Policies, Cookie Policies, and Legal Hubs.
+4. **Select a Document:** Click **Select** on the desired document (e.g., *Privacy Policy*).
+5. **Extract Text:** Click **Extract Selected Document**. The extension previews the extracted text, word count, character count, and heading structure.
+6. **Confirm Document:** Click **Confirm Document** to enable scanning.
+7. **Analyze:** Click **Analyze Document**. The extension renders the Risk Dashboard with high/medium/low severity findings and readability metrics.
+8. **Interactive Q&A:** Ask questions in plain English (e.g., *"Does this company share my data with third parties?"*).
+9. **Review Grounded Evidence:** Examine Gemini's answer alongside the exact cited clauses, genuine similarity scores, and DeBERTa NLI validation status (`SUPPORTED`, `CONTRADICTED`, `UNCERTAIN`).
+10. **Multi-Document Switching:** Switch freely between Terms and Privacy Policies without history contamination.
+
+---
+
+## 10. Running Automated Tests
+
+Run the complete Node.js test suite (506 tests across 33 suites):
+```powershell
+npm test
 ```
-*Note: If the Python service is offline, the Node.js gateway automatically falls back to deterministic lexical diffing and rule matching without interruptions.*
 
----
-
-## 4. Test Verification Baseline
-
-The repository is covered by an automated test suite across both Node.js and Python runtimes:
-
-- **Node.js Test Suite**: **195 / 195 PASS** (16 test suites via `npm test` or `node scripts/test-all.js`)
-- **Python Test Suite**: **24 / 24 PASS** (FastAPI, Embeddings, ChromaDB via `pytest tests -v` inside `ai-service/`)
-- **Total Combined Tests**: **219 / 219 PASS (100% Pass Rate)**
-
----
-
-## 5. Quantitative Evaluation Results
-
-The system implements automated benchmarking across the two primary research gaps identified in literature:
-
-```bash
-node scripts/evaluate.js
+Run the complete Python test suite (61 tests):
+```powershell
+cd ai-service; ..\.venv\Scripts\python -m pytest tests/ -v; cd ..
 ```
 
-### Verified Benchmark Results:
-1. **Personalized Clause Ranking (Core Gap 1)**:
-   - **Mean Precision@5**: **100.00%** (Academic Target: $\ge 85.00\%$) $\rightarrow$ **MET [PASS]**
-   - **Mean Recall@5**: **100.00%** (Academic Target: $\ge 85.00\%$) $\rightarrow$ **MET [PASS]**
-   - *Evaluated over 20 distinct industry concern profiles (SaaS, FinTech, E-Commerce, Social Media, HealthTech, etc.).*
-
-2. **ToS Change Impact Detection (Core Gap 2)**:
-   - **Change Magnitude Accuracy**: **93.33%**
-   - **Change Magnitude Macro-F1**: **92.06%** (Academic Target: $\ge 85.00\%$) $\rightarrow$ **MET [PASS]**
-   - **User Risk Delta Accuracy**: **100.00%**
-   - **User Risk Delta Macro-F1**: **100.00%** (Academic Target: $\ge 85.00\%$) $\rightarrow$ **MET [PASS]**
-   - *Evaluated over 30 annotated longitudinal clause revision pairs.*
-
-> [!NOTE]
-> **Academic Scope & Evaluation Notice:** These metrics are measured on the project's standardized benchmark evaluation datasets. They demonstrate algorithmic validity and target achievement under experimental conditions; they do not imply or guarantee universal real-world accuracy across all unseen legal texts. The system serves as an informational document-analysis tool and does not provide legal advice.
+**Total Test Coverage:** **567 tests passing, 0 failing, 0 skipped.**
 
 ---
 
-## 6. Core Platform Capabilities
+## 11. Known Limitations & Current Status
 
-- **PDF Ingestion & OCR Check:** Validates `%PDF-` magic bytes, extracts text per page, preserves page numbering, and flags image scans.
-- **SSRF-Protected URL Fetching:** Resolves public policy URLs while strictly blocking private, internal, loopback (RFC 1918), and cloud metadata IP spaces.
-- **Deterministic Rule Engine:** 14 legal risk categories evaluated via regex and pattern heuristics.
-- **Personalized Risk Ranking:** Dynamic user concern weights ($1\dots5$) calculate custom impact scores and ranking reasons.
-- **Semantic Change Detection:** Multi-class change magnitude (`NONE`, `MINOR`, `MODERATE`, `SIGNIFICANT`, `CRITICAL`) and risk direction shifts (`INCREASED_RISK`, `NEUTRAL`, `DECREASED_RISK`).
-- **ChromaDB RAG Evidence Grounding:** Ephemeral document-scoped vector retrieval (top-4 clauses) supporting downstream explanations.
-- **Interactive Grounded Q&A:** User questions are bounded (500 chars), prompt-injection shielded, and answered strictly using retrieved ToS evidence via `gemini-2.5-pro`.
-- **Zero-Retention Privacy:** No raw policy texts or vector embeddings are permanently persisted to databases.
+- **Localhost Deployment Only:** The backend currently operates without API authentication (**SEC-BACK-1**). It is intended strictly for local execution (`localhost:3000` / `127.0.0.1:3000`). Public remote cloud exposure is not yet approved.
+- **CPU Inference Speed:** Running DeBERTa NLI cross-encoder inference on CPU takes ~1.5s to 3s per multi-clause Q&A request.
+- **100,000-Character Threshold:** Documents exceeding 100,000 characters require explicit user consent for partial scanning.
+- **Hardcoded Extension Origin:** The Chrome extension is configured for `http://localhost:3000/*` (**SEC-EXT-2**). An extension options page for dynamic server URLs will be introduced in future updates.
 
 ---
 
-## 7. Documentation Index
+## 12. In-Depth Documentation
 
-- [System Architecture](file:///d:/TOS%20red%20flag%20scanner/docs/architecture.md) — Hybrid architecture and component boundaries.
-- [API Endpoints Reference](file:///d:/TOS%20red%20flag%20scanner/docs/api.md) — HTTP API contracts including Q&A.
-- [Phase 9 Milestone Report](file:///d:/TOS%20red%20flag%20scanner/docs/phases/phase-9.md) — Gemini 2.5 Pro, RAG, Q&A, and evaluation.
-- [UI/UX Design System](file:///d:/TOS%20red%20flag%20scanner/docs/ui-ux.md) — Visual styling and accessible components.
-- [Security & Threat Model](file:///d:/TOS%20red%20flag%20scanner/docs/security.md) — SSRF protection, CSP, and prompt isolation.
-- [Testing & Verification Guide](file:///d:/TOS%20red%20flag%20scanner/docs/testing.md) — Node and Python testing procedures.
-- [Historical Milestone Archives](file:///d:/TOS%20red%20flag%20scanner/docs/phases/) — Milestone records (Phases 1 through 9).
+For detailed architectural specifications, setup walkthroughs, and security disclosures, refer to the `docs/` directory:
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md): Complete technical design and system data flows (v3.0).
+- [docs/ACADEMIC_ALIGNMENT.md](docs/ACADEMIC_ALIGNMENT.md): Academic alignment, viva defense guide & RAG/NLI theory.
+- [docs/INSTALLATION.md](docs/INSTALLATION.md): Windows-specific beginner setup and troubleshooting.
+- [docs/USER_GUIDE.md](docs/USER_GUIDE.md): Complete feature manual and Q&A interpretation guide.
+- [docs/SECURITY_AND_PRIVACY.md](docs/SECURITY_AND_PRIVACY.md): Threat model, trust boundaries, and security disclosures (v3.0).
+- [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md): Pre-flight verification checklist for local release.

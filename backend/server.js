@@ -1,6 +1,5 @@
 import express from "express";
 import helmet from "helmet";
-import rateLimit from "express-rate-limit";
 import multer from "multer";
 import path from "node:path";
 import crypto from "node:crypto";
@@ -9,11 +8,19 @@ import { fileURLToPath } from "node:url";
 
 import apiRouter from "./src/api/routes/index.js";
 import { AppError } from "./src/security/security.js";
+import { createCorsMiddleware } from "./src/security/cors.js";
+import { authenticateRequest } from "./src/security/auth.js";
+import { healthLimiter, apiRateLimiter } from "./src/security/rate-limits.js";
 import { config } from "./src/config/env.js";
 import { logAudit } from "./src/utils/logger.js";
 
 const app = express();
 const port = config.port;
+
+// Configure reverse proxy trust conditionally (Phase 8C.3C)
+if (config.trustProxy) {
+  app.set("trust proxy", config.trustProxy);
+}
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -40,22 +47,20 @@ app.use(
   })
 );
 
-app.use(express.json({ limit: "250kb" }));
+app.use(createCorsMiddleware());
 
-app.use(
-  "/api",
-  rateLimit({
-    windowMs: config.rateLimit.windowMs,
-    max: config.rateLimit.max,
-    standardHeaders: true,
-    legacyHeaders: false
-  })
-);
+app.use(express.json({ limit: "1mb" }));
 
-// Health check endpoint
-app.get("/health", (_req, res) => {
+// Health check endpoint with dedicated rate limiter (Phase 8C.3C)
+app.get("/health", healthLimiter, (_req, res) => {
   res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
 });
+
+// Foundational API Authentication (SEC-BACK-1, enabled via ENABLE_API_AUTH)
+app.use("/api", authenticateRequest);
+
+// Tiered Rate Limiting (SEC-BACK-2, Phase 8C.3C) - mounted after auth so tokens are resolved
+app.use("/api", apiRateLimiter);
 
 // API Routes
 app.use("/api", apiRouter);
@@ -99,6 +104,11 @@ app.use((error, req, res, next) => {
     return;
   }
 
+  if (error.type === "entity.too.large" || error.status === 413 || error.statusCode === 413) {
+    res.status(413).json({ error: "Payload exceeds the 1MB size limit." });
+    return;
+  }
+
   if (error instanceof AppError) {
     res.status(error.statusCode).json({ error: error.message });
     return;
@@ -114,8 +124,8 @@ app.use((error, req, res, next) => {
 let serverInstance = null;
 const isDirectRun = Boolean(process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename));
 if (isDirectRun) {
-  serverInstance = app.listen(port, () => {
-    console.log(`ToS scanner running at http://localhost:${port}`);
+  serverInstance = app.listen(port, "127.0.0.1", () => {
+    console.log(`ToS scanner running at http://127.0.0.1:${port}`);
   });
 }
 

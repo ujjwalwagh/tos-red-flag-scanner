@@ -1,3 +1,11 @@
+import {
+  apiFetch,
+  getStoredConfig,
+  saveStoredConfig,
+  resetStoredConfig,
+  testBackendConnection
+} from "./api-client.js";
+
 const form = document.querySelector("#scan-form");
 const urlInput = document.querySelector("#policy-url");
 const fileInput = document.querySelector("#policy-file");
@@ -111,7 +119,7 @@ fileInput.addEventListener("change", async () => {
   formData.append("file", file);
 
   try {
-    const res = await fetch("/api/documents/ingest", {
+    const res = await apiFetch("/api/documents/ingest", {
       method: "POST",
       body: formData
     });
@@ -277,13 +285,13 @@ form.addEventListener("submit", async (event) => {
       formData.append("policyFile", file);
       formData.append("scanMode", scanMode);
       formData.append("userPreferences", JSON.stringify(userPreferences));
-      response = await fetch("/api/scan", {
+      response = await apiFetch("/api/scan", {
         method: "POST",
         body: formData
       });
     } else {
       const payload = url ? { url, scanMode, userPreferences } : { policyText, scanMode, userPreferences };
-      response = await fetch("/api/scan", {
+      response = await apiFetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -1073,7 +1081,7 @@ async function renderActionChecklist(report) {
   }
 
   try {
-    const res = await fetch("/api/remediation/checklist", {
+    const res = await apiFetch("/api/remediation/checklist", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1164,7 +1172,7 @@ function renderExportBar(report) {
   if (mdBtn) {
     mdBtn.addEventListener("click", async () => {
       try {
-        const res = await fetch("/api/export/report", {
+        const res = await apiFetch("/api/export/report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1194,7 +1202,7 @@ function renderExportBar(report) {
   if (jsonBtn) {
     jsonBtn.addEventListener("click", async () => {
       try {
-        const res = await fetch("/api/export/report", {
+        const res = await apiFetch("/api/export/report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1223,7 +1231,7 @@ function renderExportBar(report) {
   if (printBtn) {
     printBtn.addEventListener("click", async () => {
       try {
-        const res = await fetch("/api/export/report?raw=true", {
+        const res = await apiFetch("/api/export/report?raw=true", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -1289,7 +1297,7 @@ async function regenerateOptOutLetter() {
   const companyName = document.querySelector("#optout-company-name")?.value || activeOptOutParams.companyName || "";
 
   try {
-    const res = await fetch("/api/remediation/opt-out", {
+    const res = await apiFetch("/api/remediation/opt-out", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1392,7 +1400,7 @@ async function renderBenchmarkSection(report) {
   // If benchmarks were not pre-calculated in pipeline, evaluate on demand
   if (!benchmarks) {
     try {
-      const res = await fetch("/api/benchmarks/evaluate", {
+      const res = await apiFetch("/api/benchmarks/evaluate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1521,7 +1529,7 @@ async function fetchAndRenderAmendment() {
   if (diffEl) diffEl.innerHTML = `<span class="text-neutral-400">Generating balanced counter-proposal and redline diff...</span>`;
 
   try {
-    const res = await fetch("/api/negotiation/amendment", {
+    const res = await apiFetch("/api/negotiation/amendment", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1672,7 +1680,7 @@ async function compileAndRenderRider() {
   if (textarea) textarea.value = "Compiling unified Contract Amendment Rider...";
 
   try {
-    const res = await fetch("/api/negotiation/rider", {
+    const res = await apiFetch("/api/negotiation/rider", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1828,7 +1836,7 @@ async function renderComplianceSection(report) {
   // If compliance was not pre-calculated or needs update for selected jurisdiction
   if (!compliance || compliance.jurisdiction !== targetJurisdiction) {
     try {
-      const res = await fetch("/api/compliance/audit", {
+      const res = await apiFetch("/api/compliance/audit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -1930,7 +1938,7 @@ async function openMatrixModal() {
   if (tbody) tbody.innerHTML = "";
 
   try {
-    const res = await fetch("/api/portfolio/compare", {
+    const res = await apiFetch("/api/portfolio/compare", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -1998,7 +2006,7 @@ async function openPortfolioModal() {
   portEl.scrollIntoView({ behavior: "smooth" });
 
   try {
-    const res = await fetch("/api/portfolio/evaluate", {
+    const res = await apiFetch("/api/portfolio/evaluate", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -2085,7 +2093,7 @@ async function computeDrift() {
   if (resultsBox) resultsBox.innerHTML = `<div class="text-neutral-400 text-xs">Computing semantic policy drift...</div>`;
 
   try {
-    const res = await fetch("/api/sentinel/drift", {
+    const res = await apiFetch("/api/sentinel/drift", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -2348,6 +2356,44 @@ function resetQaSection() {
   }
 }
 
+/**
+ * Formats evidence similarity score for display.
+ * Reads supported field names: similarityScore, similarity_score, similarity.
+ * Preserves genuine 0% scores. Displays 'Similarity unavailable' for missing or invalid scores.
+ *
+ * @param {Object} item
+ * @returns {string}
+ */
+function formatSimilarityScore(item) {
+  if (!item || typeof item !== "object") return "Similarity unavailable";
+  const raw = item.similarityScore ?? item.similarity_score ?? item.similarity;
+
+  let scoreNum = null;
+  if (typeof raw === "number" && Number.isFinite(raw)) {
+    scoreNum = raw;
+  } else if (typeof raw === "string" && raw.trim() !== "") {
+    const trimmed = raw.trim();
+    if (trimmed.endsWith("%")) {
+      const parsedPct = Number(trimmed.slice(0, -1).trim());
+      if (Number.isFinite(parsedPct)) {
+        scoreNum = parsedPct / 100;
+      }
+    } else {
+      const parsed = Number(trimmed);
+      if (Number.isFinite(parsed)) {
+        scoreNum = parsed;
+      }
+    }
+  }
+
+  if (scoreNum === null) {
+    return "Similarity unavailable";
+  }
+
+  const pct = (scoreNum > 1.0 && scoreNum <= 100) ? Math.round(scoreNum) : Math.round(scoreNum * 100);
+  return `Similarity: ${pct}%`;
+}
+
 function renderQaResult(qa) {
   if (!qaResultsContainer) return;
 
@@ -2401,6 +2447,129 @@ function renderQaResult(qa) {
   answerP.textContent = qa.answer || "No answer provided.";
   card.append(answerP);
 
+  // Phase 3: Hugging Face NLI Validation Section
+  // (cross-encoder/nli-deberta-v3-base independent factual verification)
+  if (qa && qa.nliValidation && typeof qa.nliValidation === "object") {
+    const nli = qa.nliValidation;
+    const rawStatus = typeof nli.status === "string" ? nli.status.toLowerCase().trim() : "";
+
+    let status = "unavailable";
+    if (rawStatus === "supported" || rawStatus === "contradicted" || rawStatus === "uncertain" || rawStatus === "unavailable") {
+      status = rawStatus;
+    }
+
+    const nliSection = document.createElement("section");
+    nliSection.className = `qa-nli-section qa-nli-status-${status}`;
+    nliSection.setAttribute("aria-label", "Independent NLI Verification");
+
+    // Header: title, model badge, and primary status badge
+    const nliHeader = document.createElement("div");
+    nliHeader.className = "qa-nli-header";
+
+    const nliTitleGroup = document.createElement("div");
+    nliTitleGroup.className = "qa-nli-title-group";
+
+    const nliTitle = document.createElement("h4");
+    nliTitle.className = "qa-nli-title";
+    nliTitle.textContent = "Independent NLI Verification";
+
+    const nliModelTag = document.createElement("span");
+    nliModelTag.className = "qa-nli-model-tag";
+    nliModelTag.textContent = "cross-encoder/nli-deberta-v3-base";
+
+    nliTitleGroup.append(nliTitle, nliModelTag);
+
+    const nliBadge = document.createElement("span");
+    nliBadge.className = `qa-nli-badge qa-nli-badge-${status}`;
+
+    let statusLabel = "Validation unavailable";
+    if (status === "supported") {
+      statusLabel = "✓ Supported by ToS evidence";
+    } else if (status === "contradicted") {
+      statusLabel = "✕ Contradicted by ToS evidence";
+    } else if (status === "uncertain") {
+      statusLabel = "? Uncertain / Inconclusive";
+    }
+    nliBadge.textContent = statusLabel;
+
+    nliHeader.append(nliTitleGroup, nliBadge);
+    nliSection.append(nliHeader);
+
+    const nliBody = document.createElement("div");
+    nliBody.className = "qa-nli-body";
+
+    if (status === "unavailable") {
+      // For unavailable validation, show a concise explanation and NEVER fabricate scores
+      const reasonP = document.createElement("p");
+      reasonP.className = "qa-nli-reason";
+
+      let reasonText = "Validation could not be completed for this answer.";
+      if (typeof nli.reason === "string" && nli.reason.trim()) {
+        const r = nli.reason.trim();
+        if (r === "no_evidence_supplied") {
+          reasonText = "No supporting clauses were available to validate against.";
+        } else if (r === "nli_service_unavailable" || r === "nli_client_unavailable") {
+          reasonText = "NLI validation service is temporarily offline.";
+        } else if (r === "answer_generation_failed") {
+          reasonText = "Answer generation failed; validation could not be performed.";
+        } else if (r === "nli_validation_failed") {
+          reasonText = "NLI validation encountered an unexpected processing error.";
+        } else {
+          reasonText = r;
+        }
+      }
+      reasonP.textContent = reasonText;
+      nliBody.append(reasonP);
+    } else {
+      // Display NLI scores ONLY when valid numeric scores are present
+      const scores = nli.scores;
+      const hasScores = scores && typeof scores === "object" &&
+        typeof scores.entailment === "number" && !isNaN(scores.entailment) &&
+        typeof scores.neutral === "number" && !isNaN(scores.neutral) &&
+        typeof scores.contradiction === "number" && !isNaN(scores.contradiction);
+
+      if (hasScores) {
+        const scoresContainer = document.createElement("div");
+        scoresContainer.className = "qa-nli-scores";
+
+        const entPill = document.createElement("span");
+        entPill.className = "qa-nli-score-pill qa-nli-score-entailment";
+        entPill.textContent = `Entailment: ${Math.round(scores.entailment * 100)}%`;
+
+        const neuPill = document.createElement("span");
+        neuPill.className = "qa-nli-score-pill qa-nli-score-neutral";
+        neuPill.textContent = `Neutral: ${Math.round(scores.neutral * 100)}%`;
+
+        const conPill = document.createElement("span");
+        conPill.className = "qa-nli-score-pill qa-nli-score-contradiction";
+        conPill.textContent = `Contradiction: ${Math.round(scores.contradiction * 100)}%`;
+
+        scoresContainer.append(entPill, neuPill, conPill);
+        nliBody.append(scoresContainer);
+      }
+
+      // Display the best evidence clause identifier ONLY when present
+      if (typeof nli.bestClauseId === "string" && nli.bestClauseId.trim()) {
+        const clauseRow = document.createElement("div");
+        clauseRow.className = "qa-nli-clause-row";
+
+        const clauseLabel = document.createElement("span");
+        clauseLabel.className = "qa-nli-clause-label";
+        clauseLabel.textContent = "Best evidence clause:";
+
+        const clauseCode = document.createElement("code");
+        clauseCode.className = "qa-nli-clause-id";
+        clauseCode.textContent = nli.bestClauseId.trim();
+
+        clauseRow.append(clauseLabel, clauseCode);
+        nliBody.append(clauseRow);
+      }
+    }
+
+    nliSection.append(nliBody);
+    card.append(nliSection);
+  }
+
   // Requirement 9: Supporting Evidence section
   if (Array.isArray(qa.evidence) && qa.evidence.length > 0) {
     const evidenceSection = document.createElement("section");
@@ -2427,8 +2596,7 @@ function renderQaResult(qa) {
 
       const scoreBadge = document.createElement("span");
       scoreBadge.className = "qa-evidence-score";
-      const scoreNum = Math.round((item.similarityScore || 0) * 100);
-      scoreBadge.textContent = `Similarity: ${scoreNum}%`;
+      scoreBadge.textContent = formatSimilarityScore(item);
 
       itemTop.append(secName, scoreBadge);
 
@@ -2526,7 +2694,7 @@ function initQaSection() {
     }
 
     try {
-      const response = await fetch("/api/analyze/qa", {
+      const response = await apiFetch("/api/analyze/qa", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2563,4 +2731,137 @@ function initQaSection() {
 
 initQaSection();
 
-export { extractCompanyName, extractCompanyNameFromText, addToVendorStack, sessionVendorStack };
+/**
+ * Backend Connection & Authentication Settings Controller (Phase 8C.4B).
+ */
+function initSettingsModal() {
+  const modal = document.querySelector("#settings-modal");
+  const openBtn = document.querySelector("#btn-open-settings");
+  const closeBtn = document.querySelector("#btn-settings-close-x");
+  const saveBtn = document.querySelector("#btn-settings-save");
+  const testBtn = document.querySelector("#btn-settings-test");
+  const resetBtn = document.querySelector("#btn-settings-reset");
+  const toggleTokenBtn = document.querySelector("#settings-toggle-token");
+  const urlInput = document.querySelector("#settings-backend-url");
+  const tokenInput = document.querySelector("#settings-bearer-token");
+  const statusBox = document.querySelector("#settings-status-box");
+  const authBanner = document.querySelector("#auth-alert-banner");
+  const alertOpenBtn = document.querySelector("#btn-auth-alert-open");
+
+  if (!modal) return;
+
+  function setStatus(message, type = "info") {
+    if (!statusBox) return;
+    statusBox.className = `settings-status-card status-${type}`;
+    statusBox.textContent = message;
+    statusBox.classList.remove("hidden");
+  }
+
+  function clearStatus() {
+    if (!statusBox) return;
+    statusBox.className = "settings-status-card hidden";
+    statusBox.textContent = "";
+  }
+
+  function openSettings() {
+    const config = getStoredConfig();
+    if (urlInput) urlInput.value = config.backendUrl || "";
+    if (tokenInput) tokenInput.value = config.token || "";
+    clearStatus();
+    modal.classList.remove("hidden");
+    modal.removeAttribute("hidden");
+    urlInput?.focus();
+  }
+
+  function closeSettings() {
+    modal.classList.add("hidden");
+    modal.setAttribute("hidden", "true");
+  }
+
+  if (openBtn) openBtn.addEventListener("click", openSettings);
+  if (alertOpenBtn) alertOpenBtn.addEventListener("click", openSettings);
+  if (closeBtn) closeBtn.addEventListener("click", closeSettings);
+
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) closeSettings();
+  });
+
+  if (toggleTokenBtn && tokenInput) {
+    toggleTokenBtn.addEventListener("click", () => {
+      const isPassword = tokenInput.type === "password";
+      tokenInput.type = isPassword ? "text" : "password";
+      toggleTokenBtn.textContent = isPassword ? "Hide" : "Show";
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
+      const backendUrl = urlInput?.value?.trim() || "";
+      const token = tokenInput?.value?.trim() || "";
+
+      const res = saveStoredConfig({ backendUrl, token });
+      if (!res.ok) {
+        setStatus(`Error: ${res.error}`, "error");
+        return;
+      }
+
+      setStatus("Configuration saved successfully.", "success");
+      if (authBanner) authBanner.classList.add("hidden");
+    });
+  }
+
+  if (testBtn) {
+    testBtn.addEventListener("click", async () => {
+      const backendUrl = urlInput?.value?.trim() || "";
+      const token = tokenInput?.value?.trim() || "";
+
+      setStatus("Testing connection to backend...", "warning");
+      testBtn.disabled = true;
+
+      try {
+        const result = await testBackendConnection({ backendUrl, token });
+        if (result.code === "AUTH_SUCCESS") {
+          setStatus("Connected: Backend reachable and Bearer Token verified successfully.", "success");
+          if (authBanner) authBanner.classList.add("hidden");
+        } else if (result.code === "REACHABLE") {
+          setStatus("Connected: Backend reachable (Authentication is disabled on this backend).", "success");
+          if (authBanner) authBanner.classList.add("hidden");
+        } else if (result.code === "AUTH_REQUIRED") {
+          setStatus("Backend reachable, but API authentication is enabled. Please enter a valid Bearer Token.", "warning");
+        } else if (result.code === "AUTH_INVALID") {
+          setStatus("Authentication failed (HTTP 401). The supplied Bearer Token was rejected.", "error");
+        } else if (result.code === "CORS_BLOCKED") {
+          setStatus("CORS Forbidden (HTTP 403). Backend rejected request origin.", "error");
+        } else {
+          setStatus(`Connection failed: ${result.message}`, "error");
+        }
+      } catch (err) {
+        setStatus(`Test failed: ${err.message}`, "error");
+      } finally {
+        testBtn.disabled = false;
+      }
+    });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      resetStoredConfig();
+      if (urlInput) urlInput.value = "";
+      if (tokenInput) tokenInput.value = "";
+      setStatus("Reset to default same-origin / localhost.", "success");
+    });
+  }
+
+  // Global listener for 401 Unauthorized responses dispatched by apiFetch
+  if (typeof window !== "undefined") {
+    window.addEventListener("tos:auth_required", () => {
+      if (authBanner) {
+        authBanner.classList.remove("hidden");
+      }
+    });
+  }
+}
+
+initSettingsModal();
+
+export { extractCompanyName, extractCompanyNameFromText, addToVendorStack, sessionVendorStack, renderQaResult, formatSimilarityScore };

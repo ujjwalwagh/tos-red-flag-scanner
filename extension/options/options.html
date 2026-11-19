@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TOS Red Flag Scanner — Backend Settings</title>
+    <link rel="stylesheet" href="options.css" />
+  </head>
+  <body>
+    <div class="options-container">
+      <!-- Header -->
+      <header class="header">
+        <div class="brand">
+          <img src="../assets/icons/icon-48.png" alt="" class="brand-icon" width="32" height="32" />
+          <div>
+            <h1 class="brand-title">TOS Red Flag Scanner</h1>
+            <p class="brand-subtitle">Backend Configuration &amp; Credentials</p>
+          </div>
+        </div>
+        <span class="version-tag">Manifest V3 &bull; Phase 8C.3D</span>
+      </header>
+
+      <!-- Main Settings Form -->
+      <main class="content">
+        <!-- Configuration Card -->
+        <section class="card">
+          <h2 class="card-title">Backend Server Settings</h2>
+          <p class="card-desc">
+            Configure the backend server instance used for policy scanning, clause analysis, and grounded Q&amp;A.
+          </p>
+
+          <!-- Backend URL Group -->
+          <div class="form-group">
+            <label for="input-backend-url" class="form-label">
+              Backend Server URL
+              <span class="required-indicator">*</span>
+            </label>
+            <div class="input-wrapper">
+              <input
+                id="input-backend-url"
+                type="url"
+                class="form-input"
+                placeholder="http://localhost:3000"
+                spellcheck="false"
+                autocomplete="off"
+              />
+            </div>
+            <p class="form-hint">
+              Default: <code>http://localhost:3000</code>. Remote backends must use secure <strong>HTTPS</strong>. Plain HTTP is only permitted for local loopback addresses (<code>localhost</code> / <code>127.0.0.1</code>).
+            </p>
+          </div>
+
+          <!-- Bearer Token Group -->
+          <div class="form-group">
+            <label for="input-bearer-token" class="form-label">
+              API Bearer Token
+              <span class="optional-badge">Optional for Localhost</span>
+            </label>
+            <div class="input-wrapper token-wrapper">
+              <input
+                id="input-bearer-token"
+                type="password"
+                class="form-input token-input"
+                placeholder="Enter personal Bearer Token (optional for localhost)..."
+                spellcheck="false"
+                autocomplete="off"
+              />
+              <button
+                type="button"
+                id="btn-toggle-token"
+                class="btn-icon"
+                title="Show or hide token"
+                aria-label="Toggle token visibility"
+              >
+                <span id="toggle-token-icon">👁</span>
+              </button>
+            </div>
+            <p class="form-hint">
+              Required when connecting to a remote backend with <code>ENABLE_API_AUTH=true</code>. The token is stored locally in <code>chrome.storage.local</code> and is never shared, synced, or exposed to websites.
+            </p>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="form-actions">
+            <button id="btn-save" class="btn btn-primary">
+              <span id="btn-save-text">Save Configuration</span>
+            </button>
+            <button id="btn-test" class="btn btn-secondary">
+              <span id="btn-test-text">Test Connection</span>
+            </button>
+            <button id="btn-reset" class="btn btn-outline">
+              <span>Reset to Default</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Status Card -->
+        <section id="status-card" class="card status-card hidden">
+          <div class="status-header">
+            <span id="status-badge" class="badge">Status</span>
+            <span id="status-timestamp" class="timestamp"></span>
+          </div>
+          <h3 id="status-headline" class="status-headline"></h3>
+          <p id="status-details" class="status-details"></p>
+        </section>
+
+        <!-- CORS & Deployment Helper Card -->
+        <section class="card info-card">
+          <h2 class="card-title">Backend CORS Requirement</h2>
+          <p class="card-desc">
+            To authorize this extension to communicate with your backend, ensure the extension's Origin is listed in your backend's <code>.env</code> file:
+          </p>
+          <div class="code-box">
+            <code id="extension-origin-code">chrome-extension://...</code>
+            <button id="btn-copy-origin" class="btn-copy" title="Copy Origin">Copy</button>
+          </div>
+          <p class="form-hint">
+            In your backend <code>.env</code>: <code>CHROME_EXTENSION_ORIGIN=chrome-extension://&lt;id&gt;</code>
+          </p>
+        </section>
+      </main>
+
+      <footer class="footer">
+        <p>TOS Red Flag Scanner &bull; Zero-retention document intelligence &bull; Academic Research Edition</p>
+      </footer>
+    </div>
+
+    <script type="module" src="options.js"></script>
+  </body>
+</html>

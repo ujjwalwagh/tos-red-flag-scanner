@@ -1,4 +1,29 @@
-﻿node_modules/
+# Dependencies
+node_modules/
+.venv/
+ai-service/.venv/
+venv/
+env/
+
+# Environment Variables & Secrets
 .env
+.env.*
+*.env
+backend/.env
+!.env.example
+!backend/.env.example
+!ai-service/.env.example
+
+# Python Compiled Artifacts & Caches
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+**/.pytest_cache/
+
+# Distribution & Build Outputs
 dist/
+build/
 coverage/
+.nyc_output/

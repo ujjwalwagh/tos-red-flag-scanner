@@ -4,7 +4,8 @@ import { AppError, validatePolicyUrl } from "../../security/security.js";
 
 const MAX_DOWNLOAD_BYTES = 1_500_000;
 const MAX_REDIRECT_HOPS = 4;
-export const MAX_POLICY_TEXT_LENGTH = 64_000;
+export const MAX_ANALYSIS_CHARACTERS = 100_000;
+export const MAX_POLICY_TEXT_LENGTH = MAX_ANALYSIS_CHARACTERS;
 
 export async function fetchPolicyText(url) {
   let response = null;

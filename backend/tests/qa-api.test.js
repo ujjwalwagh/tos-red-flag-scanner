@@ -14,6 +14,7 @@ import http from "node:http";
 import { app } from "../server.js";
 import { GeminiProvider, buildQaPrompt } from "../src/ai/providers/gemini-provider.js";
 import { NullProvider } from "../src/ai/providers/null-provider.js";
+import { expandEvidenceWithExceptions } from "../src/api/controllers/analyze.controller.js";
 
 let server;
 let baseUrl;
@@ -219,7 +220,7 @@ test("POST /api/analyze/qa: indexes clauses, queries vectors, and returns struct
     assert.ok(indexedDocId.startsWith("qa_"));
     assert.equal(indexedClauseCount, 3);
     assert.equal(queriedQuery, "Can I get a refund if I cancel my subscription?");
-    assert.equal(queriedTopK, 4);
+    assert.equal(queriedTopK, 8);
     assert.equal(deleteCalled, true);
 
     // Verify evidence in response originates from retrieved clauses
@@ -228,9 +229,11 @@ test("POST /api/analyze/qa: indexes clauses, queries vectors, and returns struct
     assert.equal(data.qa.evidence[0].section, "Refund Policy");
     assert.equal(data.qa.evidence[0].similarityScore, 0.92);
 
-    // Verify Gemini received correct context
+    // Verify Gemini received correct context (including Stage 2 expansion)
     assert.equal(receivedInGemini.question, "Can I get a refund if I cancel my subscription?");
-    assert.equal(receivedInGemini.retrievedEvidence.length, 1);
+    assert.equal(receivedInGemini.retrievedEvidence.length, 2);
+    assert.equal(receivedInGemini.retrievedEvidence[0].clauseId, "c_ref_2");
+    assert.equal(receivedInGemini.retrievedEvidence[1].clauseId, "c_sub_1");
   } finally {
     app.locals.aiClient = null;
     app.locals.aiProvider = null;
@@ -927,3 +930,1145 @@ test("POST /api/analyze/qa: legacy flags-only input remains fully backward compa
     app.locals.aiProvider = null;
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 2 / Phase 3 NLI Baseline Tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+test("POST /api/analyze/qa: performs NLI validation on generated answer and evidence clauses", async () => {
+  const sampleClauses = [
+    { clauseId: "c_1", text: "You may cancel your subscription at any time.", section: "Subscriptions" }
+  ];
+
+  const mockClient = {
+    isCircuitClosed: () => true,
+    async withDocumentVectors(id, clauses, fn) { return await fn({ success: true }); },
+    async queryVectors() { return { success: true, results: [{ clause_id: "c_1", text: sampleClauses[0].text, section: "Subscriptions" }] }; },
+    async validateNli() {
+      return {
+        success: true,
+        available: true,
+        isSupported: true,
+        status: "supported",
+        label: "entailment",
+        scores: { entailment: 0.95, neutral: 0.03, contradiction: 0.02 },
+        bestClauseId: "c_1"
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion() {
+      return {
+        available: true,
+        data: {
+          answer: "You may cancel anytime in account settings.",
+          grounded: true,
+          confidence: 0.9,
+          relevantClauseIds: ["c_1"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: "How do I cancel?", clauses: sampleClauses })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.qa.nliValidation.status, "supported");
+    assert.equal(data.qa.nliValidation.label, "entailment");
+    assert.equal(data.qa.nliValidation.bestClauseId, "c_1");
+    assert.equal(data.qa.nliValidation.scores.entailment, 0.95);
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+test("POST /api/analyze/qa: contradicted and uncertain NLI results are exposed separately", async () => {
+  const sampleClauses = [
+    { clauseId: "c_1", text: "No refunds will be granted under any condition.", section: "Refunds" }
+  ];
+
+  // Case 1: Contradicted
+  let currentNliStatus = "contradicted";
+  let currentNliLabel = "contradiction";
+
+  const mockClient = {
+    isCircuitClosed: () => true,
+    async withDocumentVectors(id, clauses, fn) { return await fn({ success: true }); },
+    async queryVectors() { return { success: true, results: [{ clause_id: "c_1", text: sampleClauses[0].text, section: "Refunds" }] }; },
+    async validateNli() {
+      return {
+        success: true,
+        available: true,
+        isSupported: false,
+        status: currentNliStatus,
+        label: currentNliLabel,
+        scores: { entailment: 0.05, neutral: 0.10, contradiction: 0.85 },
+        bestClauseId: "c_1"
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion() {
+      return {
+        available: true,
+        data: {
+          answer: "You can receive a refund if requested within 14 days.",
+          grounded: true,
+          confidence: 0.75,
+          relevantClauseIds: ["c_1"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: "Can I get a refund?", clauses: sampleClauses })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.qa.grounded, true); // Gemini self-claim preserved
+    assert.equal(data.qa.nliValidation.status, "contradicted");
+    assert.equal(data.qa.nliValidation.label, "contradiction");
+    assert.equal(data.qa.nliValidation.scores.contradiction, 0.85);
+
+    // Case 2: Uncertain
+    currentNliStatus = "uncertain";
+    currentNliLabel = "neutral";
+
+    const res2 = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: "Can I get a refund?", clauses: sampleClauses })
+    });
+    const data2 = await res2.json();
+    assert.equal(data2.qa.nliValidation.status, "uncertain");
+    assert.equal(data2.qa.nliValidation.label, "neutral");
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+test("POST /api/analyze/qa: handles NLI service failure gracefully by setting nliValidation to unavailable", async () => {
+  const sampleClauses = [
+    { clauseId: "c_1", text: "Terms apply.", section: "Terms" }
+  ];
+
+  const mockClient = {
+    isCircuitClosed: () => true,
+    async withDocumentVectors(id, clauses, fn) { return await fn({ success: true }); },
+    async queryVectors() { return { success: true, results: [{ clause_id: "c_1", text: sampleClauses[0].text, section: "Terms" }] }; },
+    async validateNli() {
+      return {
+        success: false,
+        available: false,
+        status: "unavailable",
+        error: "service_timed_out"
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion() {
+      return {
+        available: true,
+        data: {
+          answer: "Terms apply as stated.",
+          grounded: true,
+          confidence: 0.8,
+          relevantClauseIds: ["c_1"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question: "What applies?", clauses: sampleClauses })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.qa.nliValidation.status, "unavailable");
+    assert.equal(data.qa.nliValidation.scores, null);
+    assert.equal(data.qa.nliValidation.reason, "service_timed_out");
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 5B — Two-Stage Evidence Retrieval & NLI Bridge Tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+test("Phase 5B: expandEvidenceWithExceptions pulls sibling clauses and domain restrictions", () => {
+  const boundedClauses = [
+    { clauseId: "c_cancel_base", text: "You may cancel your subscription at any time in account settings.", section: "Cancellation" },
+    { clauseId: "c_cancel_sib", text: "Upon cancellation, your access continues until the end of the current billing cycle.", section: "Cancellation" },
+    { clauseId: "c_refund_restr", text: "All renewal fees are strictly non-refundable unless required by applicable law.", section: "Refunds" },
+    { clauseId: "c_export_unrelated", text: "Export of software is prohibited unless authorized under OFAC regulations.", section: "Export Compliance" },
+    { clauseId: "c_misc", text: "General notices will be delivered by electronic mail.", section: "Notices" }
+  ];
+
+  const stage1Results = [
+    { clauseId: "c_cancel_base", text: boundedClauses[0].text, section: "Cancellation", similarityScore: 0.91 }
+  ];
+
+  const question = "Can I cancel my subscription and get a refund?";
+  const expanded = expandEvidenceWithExceptions(stage1Results, boundedClauses, question);
+
+  const expandedIds = expanded.map((e) => e.clauseId);
+
+  // Sibling in same section ("c_cancel_sib") must be included
+  assert.ok(expandedIds.includes("c_cancel_sib"), "Should include sibling clause in same section");
+
+  // Domain restriction matching "refund" domain ("c_refund_restr") must be included
+  assert.ok(expandedIds.includes("c_refund_restr"), "Should include domain-relevant restriction");
+
+  // Unrelated restriction ("c_export_unrelated") must NOT be included
+  assert.ok(!expandedIds.includes("c_export_unrelated"), "Should exclude unrelated domain restriction");
+
+  // Deduplication: stage 1 clause appears only once
+  const occurrences = expandedIds.filter((id) => id === "c_cancel_base").length;
+  assert.equal(occurrences, 1, "Stage 1 item must not be duplicated");
+
+  // Similarity score preserved on stage 1 item
+  assert.equal(expanded[0].similarityScore, 0.91);
+});
+
+test("Phase 5B: expandEvidenceWithExceptions enforces strict 10-clause cap and deduplication", () => {
+  // Pool of 20 clauses in the same section with domain restrictions
+  const boundedClauses = Array.from({ length: 20 }, (_, i) => ({
+    clauseId: `c_${i + 1}`,
+    text: `Subscription renewal term ${i + 1} provided that user provides 30 days prior written notice.`,
+    section: "Subscription Terms"
+  }));
+
+  const stage1Results = [
+    { clauseId: "c_1", text: boundedClauses[0].text, section: "Subscription Terms", similarityScore: 0.88 },
+    { clauseId: "c_2", text: boundedClauses[1].text, section: "Subscription Terms", similarityScore: 0.85 }
+  ];
+
+  const expanded = expandEvidenceWithExceptions(stage1Results, boundedClauses, "How to cancel subscription?");
+
+  assert.equal(expanded.length, 10, "Evidence bundle must be strictly capped at 10 clauses");
+  const uniqueIds = new Set(expanded.map((e) => e.clauseId));
+  assert.equal(uniqueIds.size, 10, "All clauses in expanded bundle must have unique IDs");
+});
+
+test("Phase 5B: POST /api/analyze/qa exposes clauseEvaluations and compositeEvaluation from NLI", async () => {
+  const sampleClauses = [
+    { clauseId: "c_sub_1", text: "Subscriptions may be cancelled anytime.", section: "Subscriptions" },
+    { clauseId: "c_sub_2", text: "Subscription fees are non-refundable unless cancelled within 24 hours.", section: "Subscriptions" }
+  ];
+
+  const mockClient = {
+    isCircuitClosed: () => true,
+    async withDocumentVectors(id, clauses, fn) { return await fn({ success: true }); },
+    async queryVectors() {
+      return {
+        success: true,
+        results: [
+          { clause_id: "c_sub_1", text: sampleClauses[0].text, section: "Subscriptions", similarity_score: 0.90 }
+        ]
+      };
+    },
+    async validateNli() {
+      return {
+        success: true,
+        available: true,
+        isSupported: false,
+        status: "uncertain",
+        label: "neutral",
+        scores: { entailment: 0.65, neutral: 0.15, contradiction: 0.20 },
+        bestClauseId: "c_sub_1",
+        evaluatedCount: 2,
+        clauseEvaluations: [
+          { clauseId: "c_sub_1", label: "entailment", scores: { entailment: 0.85, neutral: 0.10, contradiction: 0.05 } },
+          { clauseId: "c_sub_2", label: "contradiction", scores: { entailment: 0.05, neutral: 0.20, contradiction: 0.75 } }
+        ],
+        compositeEvaluation: {
+          label: "neutral",
+          scores: { entailment: 0.40, neutral: 0.45, contradiction: 0.15 }
+        },
+        reason: "conflicting_evidence"
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion() {
+      return {
+        available: true,
+        data: {
+          answer: "You can cancel anytime, but refunds are restricted.",
+          grounded: true,
+          confidence: 0.80,
+          relevantClauseIds: ["c_sub_1", "c_sub_2"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Can I cancel and get my money back?",
+        clauses: sampleClauses
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.ok(data.qa.nliValidation);
+    assert.equal(data.qa.nliValidation.status, "uncertain");
+    assert.equal(data.qa.nliValidation.reason, "conflicting_evidence");
+
+    // Verify clauseEvaluations exposed
+    assert.ok(Array.isArray(data.qa.nliValidation.clauseEvaluations));
+    assert.equal(data.qa.nliValidation.clauseEvaluations.length, 2);
+    assert.equal(data.qa.nliValidation.clauseEvaluations[0].clauseId, "c_sub_1");
+    assert.equal(data.qa.nliValidation.clauseEvaluations[0].label, "entailment");
+    assert.equal(data.qa.nliValidation.clauseEvaluations[1].clauseId, "c_sub_2");
+    assert.equal(data.qa.nliValidation.clauseEvaluations[1].label, "contradiction");
+
+    // Verify compositeEvaluation exposed
+    assert.ok(data.qa.nliValidation.compositeEvaluation);
+    assert.equal(data.qa.nliValidation.compositeEvaluation.label, "neutral");
+    assert.equal(data.qa.nliValidation.compositeEvaluation.scores.entailment, 0.40);
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+test("Phase 5B: zero-retention vector cleanup runs in finally block on provider exception", async () => {
+  let cleanupExecuted = false;
+
+  const mockClient = {
+    isCircuitClosed: () => true,
+    async withDocumentVectors(id, clauses, callback) {
+      try {
+        return await callback({ success: true });
+      } finally {
+        cleanupExecuted = true;
+      }
+    },
+    async queryVectors() {
+      return { success: true, results: [] };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini-faulty",
+    async answerQuestion() {
+      throw new Error("Simulated transient provider crash");
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Is this agreement binding?",
+        clauses: [{ clauseId: "c1", text: "This agreement is binding.", section: "Intro" }]
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.qa.available, false);
+    assert.equal(data.qa.reason, "provider_exception");
+    assert.equal(cleanupExecuted, true, "Zero-retention cleanup must execute despite provider exception");
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 7G-D.4 — Vector Indexing & Semantic Retrieval Reliability Tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+test("Phase 7G-D.4: Maps similarity scores from similarity, similarity_score, and similarityScore", async () => {
+  const sampleClauses = [
+    { clauseId: "c_1", text: "Subscription terms and cancellation policy.", section: "Subscriptions" },
+    { clauseId: "c_2", text: "Refunds are processed within 14 business days.", section: "Billing" },
+    { clauseId: "c_3", text: "Disputes must be brought in individual arbitration.", section: "Disputes" }
+  ];
+
+  let capturedEvidence = null;
+
+  const mockClient = {
+    isCircuitClosed: () => true,
+    async withDocumentVectors(id, clauses, callback) {
+      return await callback({ success: true });
+    },
+    async queryVectors() {
+      return {
+        success: true,
+        results: [
+          { clause_id: "c_1", text: sampleClauses[0].text, section: "Subscriptions", similarity: 0.88 },
+          { clause_id: "c_2", text: sampleClauses[1].text, section: "Billing", similarity_score: 0.75 },
+          { clause_id: "c_3", text: sampleClauses[2].text, section: "Disputes", similarityScore: 0.65 }
+        ]
+      };
+    },
+    async validateNli() {
+      return {
+        success: true,
+        available: true,
+        isSupported: true,
+        status: "supported",
+        label: "entailment",
+        scores: { entailment: 0.9, neutral: 0.05, contradiction: 0.05 },
+        bestClauseId: "c_1",
+        evaluatedCount: 1,
+        clauseEvaluations: []
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion(ctx) {
+      capturedEvidence = ctx.retrievedEvidence;
+      return {
+        available: true,
+        data: {
+          answer: "You can cancel your subscription anytime.",
+          grounded: true,
+          confidence: 0.95,
+          relevantClauseIds: ["c_1", "c_2", "c_3"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Can I cancel my subscription?",
+        clauses: sampleClauses
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.ok(data.qa.evidence);
+
+    // Verify all 3 score formats were normalized to positive numbers in evidence
+    const e1 = data.qa.evidence.find((e) => e.clauseId === "c_1");
+    const e2 = data.qa.evidence.find((e) => e.clauseId === "c_2");
+    const e3 = data.qa.evidence.find((e) => e.clauseId === "c_3");
+
+    assert.ok(e1, "Clause 1 must be in evidence");
+    assert.equal(e1.similarityScore, 0.88, "similarity field mapped to similarityScore");
+    assert.ok(e2, "Clause 2 must be in evidence");
+    assert.equal(e2.similarityScore, 0.75, "similarity_score field mapped to similarityScore");
+    assert.ok(e3, "Clause 3 must be in evidence");
+    assert.equal(e3.similarityScore, 0.65, "similarityScore field preserved");
+
+    // Also verify capturedEvidence passed to Gemini has non-zero similarityScore
+    assert.ok(capturedEvidence, "Evidence must be passed to provider");
+    const cap1 = capturedEvidence.find((e) => e.clauseId === "c_1");
+    assert.equal(cap1.similarityScore, 0.88);
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+test("Phase 7G-D.4: Fallback keyword retrieval prioritizes operational cancellation clause over generic clauses", async () => {
+  // Simulate Spotify-like clauses where many clauses contain the stop word "can",
+  // but only clause_77 contains operational cancellation procedures.
+  const spotifyLikeClauses = [
+    { clauseId: "c_1", text: "You can access the Spotify service on supported devices.", section: "General Use" },
+    { clauseId: "c_2", text: "We can modify these terms of service at any time without notice.", section: "Modifications" },
+    { clauseId: "c_3", text: "You can create a user account by providing your valid email address.", section: "Account Setup" },
+    { clauseId: "c_4", text: "You can share playlists with your friends and family.", section: "Social Features" },
+    { clauseId: "c_5", text: "Users can download tracks for offline listening with a paid subscription.", section: "Offline Mode" },
+    { clauseId: "c_6", text: "You can contact our support team 24/7 through the help center.", section: "Customer Service" },
+    {
+      clauseId: "clause_77",
+      text: "Payment; Cancellation. You may cancel your Paid Subscription at any time by logging into your Spotify account and following the prompts on the Account page. If you cancel your Paid Subscription, your cancellation will take effect at the end of the current Paid Subscription Period.",
+      section: "3. Payment; Cancellation"
+    }
+  ];
+
+  let passedEvidenceToGemini = null;
+
+  // Mock AI client where vector indexing fails or is disabled (fallback triggers)
+  const mockClient = {
+    isCircuitClosed: () => true,
+    async withDocumentVectors(id, clauses, callback) {
+      // Return vector failure to force fallback keyword retrieval
+      return await callback({ success: false, error: "Vector store unavailable" });
+    },
+    async queryVectors() {
+      return { success: false, results: [] };
+    },
+    async validateNli() {
+      return {
+        success: true,
+        available: true,
+        isSupported: true,
+        status: "supported",
+        label: "entailment",
+        scores: { entailment: 0.95, neutral: 0.03, contradiction: 0.02 },
+        bestClauseId: "clause_77",
+        evaluatedCount: 1,
+        clauseEvaluations: []
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion(ctx) {
+      passedEvidenceToGemini = ctx.retrievedEvidence;
+      return {
+        available: true,
+        data: {
+          answer: "Yes, you may cancel your Paid Subscription at any time by logging into your Spotify account and following the prompts on the Account page.",
+          grounded: true,
+          confidence: 0.95,
+          relevantClauseIds: ["clause_77"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Can I cancel my subscription?",
+        clauses: spotifyLikeClauses
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.ok(data.qa.evidence);
+
+    // Clause 77 must be present in retrieved evidence
+    const clause77 = data.qa.evidence.find((e) => e.clauseId === "clause_77");
+    assert.ok(clause77, "clause_77 must be retrieved in fallback retrieval");
+
+    // Clause 77 should be the top-ranked or among top-ranked evidence passed to Gemini
+    assert.ok(passedEvidenceToGemini, "Evidence must be passed to Gemini provider");
+    const topClause = passedEvidenceToGemini[0];
+    assert.equal(topClause.clauseId, "clause_77", "clause_77 must be ranked #1 in fallback retrieval for cancellation query");
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+test("Phase 7G-D.4: 111-clause document processes and retrieves cancellation evidence via vector search", async () => {
+  // Generate 111 clauses simulating full Spotify Paid Subscription Terms
+  const clauses111 = Array.from({ length: 111 }, (_, i) => ({
+    clauseId: `clause_${i + 1}`,
+    text: `Generic legal clause ${i + 1} regarding terms of use, service availability, and compliance with local laws and regulations.`,
+    section: `Section ${Math.floor(i / 10) + 1}`
+  }));
+
+  // Inject the actual cancellation clause at index 76 (clause_77)
+  clauses111[76] = {
+    clauseId: "clause_77",
+    text: "Payment; Cancellation. You may cancel your Paid Subscription at any time by logging into your Spotify account and following the prompts on the Account page.",
+    section: "3. Payment; Cancellation"
+  };
+
+  let indexedCount = 0;
+
+  const mockClient = {
+    isCircuitClosed: () => true,
+    async withDocumentVectors(id, clauses, callback) {
+      indexedCount = clauses.length;
+      return await callback({ success: true, count: clauses.length });
+    },
+    async queryVectors(id, query, topK) {
+      return {
+        success: true,
+        results: [
+          { clause_id: "clause_77", text: clauses111[76].text, section: clauses111[76].section, similarity: 0.89 },
+          { clause_id: "clause_76", text: clauses111[75].text, section: clauses111[75].section, similarity: 0.62 }
+        ]
+      };
+    },
+    async validateNli(answer, evidence) {
+      return {
+        success: true,
+        available: true,
+        isSupported: true,
+        status: "supported",
+        label: "entailment",
+        scores: { entailment: 0.92, neutral: 0.05, contradiction: 0.03 },
+        bestClauseId: "clause_77",
+        evaluatedCount: 1,
+        clauseEvaluations: [{ clauseId: "clause_77", label: "entailment", scores: { entailment: 0.92, neutral: 0.05, contradiction: 0.03 } }]
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion(ctx) {
+      return {
+        available: true,
+        data: {
+          answer: "You may cancel your Paid Subscription at any time through your Spotify Account page.",
+          grounded: true,
+          confidence: 0.92,
+          relevantClauseIds: ["clause_77"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Can I cancel my subscription?",
+        clauses: clauses111
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(indexedCount, 111, "All 111 clauses must be indexed");
+    assert.equal(data.qa.grounded, true);
+    assert.equal(data.qa.evidence[0].clauseId, "clause_77");
+    assert.equal(data.qa.evidence[0].similarityScore, 0.89);
+    assert.equal(data.qa.nliValidation.status, "supported");
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Phase 7G-D.6: Gated NLI Validation for Ungrounded Answers
+// ─────────────────────────────────────────────────────────────────────────────
+
+test("41. Gated NLI: ungrounded answer skips factual NLI validation with uncertain status", async () => {
+  let validateNliCalled = false;
+
+  const mockClient = {
+    async initialize() {},
+    async indexDocumentChunks() {
+      return { success: true, count: 2, chunkIds: ["c1", "c2"] };
+    },
+    async querySimilarChunks() {
+      return {
+        success: true,
+        matches: [
+          { chunkId: "c1", score: 0.72, text: "Section 1: General provisions.", section: "General" }
+        ]
+      };
+    },
+    async deleteDocumentChunks() {
+      return { success: true };
+    },
+    async validateNli() {
+      validateNliCalled = true;
+      return {
+        success: true,
+        status: "contradicted",
+        scores: { entailment: 0.0, neutral: 0.1, contradiction: 0.9 }
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion() {
+      return {
+        available: true,
+        data: {
+          answer: "The provided Terms of Service evidence does not contain enough information to answer whether you can cancel your subscription.",
+          grounded: false,
+          confidence: 0.0,
+          relevantClauseIds: []
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Can I cancel my subscription?",
+        clauses: SAMPLE_CLAUSES
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.qa.grounded, false);
+    assert.equal(validateNliCalled, false, "validateNli must NOT be called when grounded: false");
+    assert.equal(data.qa.nliValidation.status, "uncertain");
+    assert.equal(data.qa.nliValidation.label, "neutral");
+    assert.equal(data.qa.nliValidation.reason, "insufficient_evidence_unanswered");
+    assert.equal(data.qa.nliValidation.scores, null);
+    assert.equal(data.qa.nliValidation.bestClauseId, null);
+    assert.ok(data.qa.answer.includes("does not contain enough information"));
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+test("42. Gated NLI: grounded answer undergoes full factual NLI validation", async () => {
+  let validateNliCalled = false;
+
+  const mockClient = {
+    async initialize() {},
+    async indexDocumentChunks() {
+      return { success: true, count: 2, chunkIds: ["c_sub_1"] };
+    },
+    async querySimilarChunks() {
+      return {
+        success: true,
+        matches: [
+          { chunkId: "c_sub_1", score: 0.88, text: SAMPLE_CLAUSES[0].text, section: SAMPLE_CLAUSES[0].section }
+        ]
+      };
+    },
+    async deleteDocumentChunks() {
+      return { success: true };
+    },
+    async validateNli(answer, evidence) {
+      validateNliCalled = true;
+      return {
+        success: true,
+        available: true,
+        status: "supported",
+        label: "entailment",
+        scores: { entailment: 0.94, neutral: 0.04, contradiction: 0.02 },
+        bestClauseId: "c_sub_1",
+        evaluatedCount: 1
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion() {
+      return {
+        available: true,
+        data: {
+          answer: "Your subscription renews automatically unless cancelled 24 hours prior.",
+          grounded: true,
+          confidence: 0.9,
+          relevantClauseIds: ["c_sub_1"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Does my subscription renew?",
+        clauses: SAMPLE_CLAUSES
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.qa.grounded, true);
+    assert.equal(validateNliCalled, true, "validateNli MUST be called when grounded: true");
+    assert.equal(data.qa.nliValidation.status, "supported");
+    assert.equal(data.qa.nliValidation.label, "entailment");
+    assert.equal(data.qa.nliValidation.scores.entailment, 0.94);
+    assert.equal(data.qa.nliValidation.bestClauseId, "c_sub_1");
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+test("43. Clause Bounds: POST /api/analyze/qa rejects > 1000 clauses with 400", async () => {
+  const over1000Clauses = Array.from({ length: 1001 }, (_, i) => ({
+    clauseId: `c_${i}`,
+    text: `Clause text ${i}`,
+    section: "Section"
+  }));
+
+  const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      question: "Can I cancel my subscription?",
+      clauses: over1000Clauses
+    })
+  });
+
+  assert.equal(res.status, 400);
+  const data = await res.json();
+  assert.ok(data.error.includes("maximum limit of 1,000 clauses"));
+});
+
+test("44. Clause Bounds: POST /api/analyze/qa allows 1000 clauses without truncation", async () => {
+  let boundedClausesPassed = null;
+  const mockClient = {
+    async withDocumentVectors(sessionId, clauses, callback) {
+      boundedClausesPassed = clauses;
+      return await callback({ success: true });
+    },
+    async queryVectors() {
+      return {
+        success: true,
+        results: [
+          { clause_id: "c_999", text: "Clause 999", section: "Final", similarity: 0.85 }
+        ]
+      };
+    },
+    async validateNli() {
+      return { success: true, available: true, status: "supported", label: "entailment" };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion() {
+      return {
+        available: true,
+        data: {
+          answer: "Found in clause 999.",
+          grounded: true,
+          confidence: 0.9,
+          relevantClauseIds: ["c_999"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const exactly1000 = Array.from({ length: 1000 }, (_, i) => ({
+      clauseId: `c_${i}`,
+      text: `Clause text ${i}`,
+      section: "Section"
+    }));
+
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Where is clause 999?",
+        clauses: exactly1000
+      })
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(boundedClausesPassed.length, 1000);
+    assert.equal(boundedClausesPassed[999].clauseId, "c_999");
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+test("45. Large Document Q&A: 693-clause Spotify Privacy simulation retrieves Section 5 clause 584", async () => {
+  let indexedClauses = null;
+  const mockClient = {
+    async withDocumentVectors(sessionId, clauses, callback) {
+      indexedClauses = clauses;
+      return await callback({ success: true });
+    },
+    async queryVectors(sessionId, query) {
+      // Simulate vector match finding clause_584 in Section 5
+      const matched = indexedClauses.find((c) => c.clauseId === "clause_584");
+      return {
+        success: true,
+        results: matched ? [{
+          clause_id: matched.clauseId,
+          text: matched.text,
+          section: matched.section,
+          similarity: 0.88
+        }] : []
+      };
+    },
+    async validateNli() {
+      return {
+        success: true,
+        available: true,
+        status: "supported",
+        label: "entailment",
+        scores: { entailment: 0.92, neutral: 0.05, contradiction: 0.03 },
+        bestClauseId: "clause_584"
+      };
+    }
+  };
+
+  let geminiEvidence = null;
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion(ctx) {
+      geminiEvidence = ctx.retrievedEvidence;
+      return {
+        available: true,
+        data: {
+          answer: "Yes, Spotify shares personal data with advertising partners.",
+          grounded: true,
+          confidence: 0.95,
+          relevantClauseIds: ["clause_584"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const spotifyClauses = Array.from({ length: 693 }, (_, i) => {
+      if (i === 584) {
+        return {
+          clauseId: "clause_584",
+          text: "We share your personal data with advertising partners to show you personalized advertisements.",
+          section: "5. Sharing your personal data"
+        };
+      }
+      return {
+        clauseId: `clause_${i}`,
+        text: `General clause text for index ${i}.`,
+        section: "General"
+      };
+    });
+
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Can my personal data be shared with third parties?",
+        clauses: spotifyClauses,
+        documentType: "PRIVACY",
+        documentLabel: "Privacy Policy"
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(indexedClauses.length, 693, "All 693 clauses must reach indexing without 250 truncation");
+    assert.equal(geminiEvidence.length >= 1, true);
+    assert.equal(geminiEvidence[0].clauseId, "clause_584");
+    assert.equal(data.qa.grounded, true);
+    assert.equal(data.qa.nliValidation.status, "supported");
+    assert.equal(data.qa.nliValidation.bestClauseId, "clause_584");
+    assert.ok(data.qa.answer.includes("shares personal data"));
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
+test("46. Phase 7G-D.8: Preserves genuine similarity scores (0.72, 0.666, 0) and returns null for unscored clauses without fabrication", async () => {
+  const mockClient = {
+    async withDocumentVectors(sessionId, clauses, callback) {
+      return await callback({ success: true });
+    },
+    async queryVectors() {
+      return {
+        success: true,
+        results: [
+          { clause_id: "c_sub_1", text: SAMPLE_CLAUSES[0].text, section: "Subscription Renewal", similarity: 0.72 },
+          { clause_id: "c_ref_2", text: SAMPLE_CLAUSES[1].text, section: "Refund Policy", similarity_score: 0.666 },
+          { clause_id: "c_arb_3", text: SAMPLE_CLAUSES[2].text, section: "Dispute Resolution", similarityScore: 0 }
+        ]
+      };
+    },
+    async validateNli() {
+      return {
+        success: true,
+        available: true,
+        status: "supported",
+        label: "entailment",
+        scores: { entailment: 0.95, neutral: 0.03, contradiction: 0.02 },
+        bestClauseId: "c_sub_1"
+      };
+    }
+  };
+
+  const mockProvider = {
+    name: "mock-gemini",
+    async answerQuestion() {
+      return {
+        available: true,
+        data: {
+          answer: "You may cancel your subscription anytime.",
+          grounded: true,
+          confidence: 0.95,
+          relevantClauseIds: ["c_sub_1", "c_ref_2", "c_arb_3"]
+        }
+      };
+    }
+  };
+
+  app.locals.aiClient = mockClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const res = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Can I cancel my subscription?",
+        clauses: SAMPLE_CLAUSES
+      })
+    });
+
+    assert.equal(res.status, 200);
+    const data = await res.json();
+    assert.equal(data.success, true);
+    assert.equal(data.qa.grounded, true);
+    assert.equal(data.qa.evidence.length, 3);
+
+    const e1 = data.qa.evidence.find((e) => e.clauseId === "c_sub_1");
+    const e2 = data.qa.evidence.find((e) => e.clauseId === "c_ref_2");
+    const e3 = data.qa.evidence.find((e) => e.clauseId === "c_arb_3");
+
+    // 0.72 preserved across all aliases
+    assert.equal(e1.similarityScore, 0.72);
+    assert.equal(e1.similarity, 0.72);
+    assert.equal(e1.similarity_score, 0.72);
+
+    // 0.666 preserved across all aliases
+    assert.equal(e2.similarityScore, 0.666);
+    assert.equal(e2.similarity, 0.666);
+    assert.equal(e2.similarity_score, 0.666);
+
+    // Genuine 0 preserved across all aliases (not converted to null or lost)
+    assert.equal(e3.similarityScore, 0);
+    assert.equal(e3.similarity, 0);
+    assert.equal(e3.similarity_score, 0);
+
+    // Verify NLI validation classification remains unchanged
+    assert.equal(data.qa.nliValidation.status, "supported");
+    assert.equal(data.qa.nliValidation.label, "entailment");
+    assert.equal(data.qa.nliValidation.scores.entailment, 0.95);
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+
+  // Subtest: Verify that fallback keyword retrieval does NOT fabricate 0 (returns null)
+  const failingClient = {
+    async withDocumentVectors(sessionId, clauses, callback) {
+      return await callback({ success: false });
+    },
+    async validateNli() {
+      return {
+        success: true,
+        available: true,
+        status: "supported",
+        label: "entailment",
+        scores: { entailment: 0.90, neutral: 0.05, contradiction: 0.05 },
+        bestClauseId: "c_sub_1"
+      };
+    }
+  };
+
+  app.locals.aiClient = failingClient;
+  app.locals.aiProvider = mockProvider;
+
+  try {
+    const resFallback = await fetch(`${baseUrl}/api/analyze/qa`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        question: "Can I cancel my account?",
+        clauses: SAMPLE_CLAUSES
+      })
+    });
+
+    assert.equal(resFallback.status, 200);
+    const dataFallback = await resFallback.json();
+    assert.equal(dataFallback.success, true);
+    assert.ok(dataFallback.qa.evidence.length > 0);
+    // Unscored fallback clauses must have similarityScore: null (NEVER fabricated as 0)
+    assert.equal(dataFallback.qa.evidence[0].similarityScore, null);
+    assert.equal(dataFallback.qa.evidence[0].similarity, null);
+    assert.equal(dataFallback.qa.evidence[0].similarity_score, null);
+  } finally {
+    app.locals.aiClient = null;
+    app.locals.aiProvider = null;
+  }
+});
+
