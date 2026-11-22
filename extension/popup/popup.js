@@ -43,6 +43,90 @@ export function formatSimilarityScore(item) {
   return `Similarity: ${pct}%`;
 }
 
+/**
+ * Renders backend health and connectivity status safely across popup DOM elements.
+ * Null-safe against missing, renamed, or conditionally rendered DOM nodes.
+ *
+ * @param {Object} res - Service worker health response
+ * @param {Object} [elements] - Target DOM element references
+ */
+export function applyStatusResponse(res, elements = {}) {
+  const {
+    statusDotEl,
+    statusTextEl,
+    statusHintEl,
+    timestampEl,
+    updateBackendHost
+  } = elements;
+
+  function renderOfflineInternal(reason) {
+    if (statusDotEl) statusDotEl.className = "status-dot status-offline";
+    if (statusTextEl) statusTextEl.textContent = "Backend Offline — Start the TOS Red Flag Scanner backend.";
+    if (statusHintEl) {
+      statusHintEl.textContent = reason ? `Details: ${reason}` : "Ensure 'npm start' is running in the backend directory.";
+      statusHintEl.className = "status-hint is-error";
+    }
+    if (timestampEl) {
+      timestampEl.textContent = "";
+    }
+  }
+
+  if (!res) {
+    renderOfflineInternal("No response from service worker.");
+    return;
+  }
+
+  if (res.backendUrl && typeof updateBackendHost === "function") {
+    updateBackendHost(res.backendUrl);
+  }
+
+  if (res.ok && res.status === "connected") {
+    if (statusDotEl) statusDotEl.className = "status-dot status-connected";
+    if (statusTextEl) statusTextEl.textContent = "Backend Connected";
+    if (statusHintEl) {
+      statusHintEl.textContent = "Ready to scan policies and verify clauses.";
+      statusHintEl.className = "status-hint";
+    }
+    if (res.timestamp && timestampEl) {
+      try {
+        const time = new Date(res.timestamp).toLocaleTimeString();
+        timestampEl.textContent = time;
+      } catch (_) {
+        // Safe against invalid date strings
+      }
+    }
+    return;
+  }
+
+  if (res.status === "auth_required") {
+    if (statusDotEl) statusDotEl.className = "status-dot status-checking";
+    if (statusTextEl) statusTextEl.textContent = "Authentication Required";
+    if (statusHintEl) {
+      statusHintEl.textContent = "Backend requires a Bearer Token. Click Settings to configure credentials.";
+      statusHintEl.className = "status-hint is-warning";
+    }
+    if (timestampEl) {
+      timestampEl.textContent = "";
+    }
+    return;
+  }
+
+  if (res.status === "cors_unconfigured") {
+    if (statusDotEl) statusDotEl.className = "status-dot status-checking";
+    if (statusTextEl) statusTextEl.textContent = "CORS Not Configured";
+    if (statusHintEl) {
+      statusHintEl.textContent = "Add CHROME_EXTENSION_ORIGIN to backend .env and restart backend.";
+      statusHintEl.className = "status-hint is-warning";
+    }
+    if (timestampEl) {
+      timestampEl.textContent = "";
+    }
+    return;
+  }
+
+  renderOfflineInternal(res.error || "Unable to reach configured backend.");
+}
+
 if (typeof document !== "undefined" && typeof document.addEventListener === "function") {
   document.addEventListener("DOMContentLoaded", () => {
   // Elements: Header & Site
@@ -404,51 +488,23 @@ if (typeof document !== "undefined" && typeof document.addEventListener === "fun
   }
 
   function renderStatusResponse(res) {
-    if (!res) {
-      renderOffline("No response from service worker.");
-      return;
-    }
-
-    if (res.backendUrl) {
-      updateBackendHostDisplay(res.backendUrl);
-    }
-
-    if (res.ok && res.status === "connected") {
-      statusDotEl.className = "status-dot status-connected";
-      statusTextEl.textContent = "Backend Connected";
-      statusHintEl.textContent = "Ready to scan policies and verify clauses.";
-      statusHintEl.className = "status-hint";
-      if (res.timestamp) {
-        const time = new Date(res.timestamp).toLocaleTimeString();
-        timestampEl.textContent = time;
-      }
-      return;
-    }
-
-    if (res.status === "auth_required") {
-      statusDotEl.className = "status-dot status-checking";
-      statusTextEl.textContent = "Authentication Required";
-      statusHintEl.textContent = "Backend requires a Bearer Token. Click Settings to configure credentials.";
-      statusHintEl.className = "status-hint is-warning";
-      return;
-    }
-
-    if (res.status === "cors_unconfigured") {
-      statusDotEl.className = "status-dot status-checking";
-      statusTextEl.textContent = "CORS Not Configured";
-      statusHintEl.textContent = "Add CHROME_EXTENSION_ORIGIN to backend .env and restart backend.";
-      statusHintEl.className = "status-hint is-warning";
-      return;
-    }
-
-    renderOffline(res.error || "Unable to reach configured backend.");
+    applyStatusResponse(res, {
+      statusDotEl,
+      statusTextEl,
+      statusHintEl,
+      timestampEl,
+      updateBackendHost: updateBackendHostDisplay
+    });
   }
 
   function renderOffline(reason) {
-    statusDotEl.className = "status-dot status-offline";
-    statusTextEl.textContent = "Backend Offline — Start the TOS Red Flag Scanner backend.";
-    statusHintEl.textContent = reason ? `Details: ${reason}` : "Ensure 'npm start' is running in the backend directory.";
-    statusHintEl.className = "status-hint is-error";
+    applyStatusResponse({ ok: false, error: reason }, {
+      statusDotEl,
+      statusTextEl,
+      statusHintEl,
+      timestampEl,
+      updateBackendHost: updateBackendHostDisplay
+    });
   }
 
   // 3. Policy Detection Function

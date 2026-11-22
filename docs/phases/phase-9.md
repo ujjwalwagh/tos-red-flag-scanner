@@ -1,5 +1,10 @@
 # Phase 9: AI Microservice Migration, Google Gemini 2.5 Pro Integration, ChromaDB RAG & Quantitative Academic Evaluation
 
+> [!NOTE]
+> **Architectural Progression Context:**  
+> This specification documents the foundational AI Microservice migration that established the independent Python FastAPI service, Sentence-Transformers embeddings, ephemeral ChromaDB vector store, Gemini 2.5 Pro generative layer, and the quantitative academic evaluation framework.  
+> Following this foundational migration, subsequent releases introduced **Phase 8A** (Manifest V3 Browser Extension & Multi-Document Isolation), **Phase 8B** (LangChain & LangGraph State Machine Dual-Engine Orchestration), and **Phase 8C** (Foundational API Bearer Authentication, Tiered Rate-Limiting, Internal Token Security, and Web/Extension Client Options). For the latest consolidated specifications, refer to [docs/architecture.md](../architecture.md) and [README.md](../../README.md).
+
 ## Overview & Purpose
 Phase 9 transitions PrismClause from a single-tier rule-based application with optional NVIDIA NIM enrichment into a modern **hybrid Node.js/Express + Python/FastAPI architecture**. The phase establishes:
 1. **Dedicated AI & NLP Microservice**: An independent Python/FastAPI service hosting dense sentence embeddings and semantic vector storage.
@@ -71,13 +76,18 @@ The evaluation results on the standardized benchmark datasets comfortably surpas
 
 ---
 
-## Verified Test Baseline
+## Verified Test Baseline & Progression
 
-All test suites pass with 100% success across both language runtimes:
-
+At the completion of Phase 9.5, the foundational AI microservice baseline was:
 - **Node.js Test Suite (`node scripts/test-all.js`)**: **195 / 195 tests PASS** (16 test suites)
 - **Python Test Suite (`pytest tests -v` in `ai-service/`)**: **24 / 24 tests PASS**
-- **Combined Platform Baseline**: **219 / 219 tests PASS**
+- **Phase 9 Baseline**: **219 / 219 tests PASS**
+
+*Current Comprehensive Test Baseline (following Phases 8A, 8B, 8C, 9.1, 9.2, and 9.3):*
+- **Node.js Test Suite (`npm test`)**: **606 / 606 tests PASS** (39 test suites)
+- **Python AI Test Suite (`pytest ai-service/tests`)**: **73 / 73 tests PASS** (5 test files)
+- **Quantitative Academic Evaluation (`scripts/evaluate.js`)**: **All 4 Targets Met** ($\ge 85\%$)
+- **Current Total Baseline**: **679 / 679 tests PASS (100% Pass Rate)**
 
 ---
 

@@ -12,6 +12,7 @@ import {
   validateMessageSender,
   PRIVILEGED_MESSAGE_ACTIONS
 } from "../../extension/background/service-worker.js";
+import { applyStatusResponse } from "../../extension/popup/popup.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const EXTENSION_DIR = path.resolve(__dirname, "../../extension");
@@ -94,6 +95,7 @@ test("popup files exist and contain required UI elements", () => {
   assert.ok(html.includes('id="status-dot"'), "Status indicator dot must exist");
   assert.ok(html.includes('id="status-text"'), "Status text element must exist");
   assert.ok(html.includes('id="btn-check-connection"'), "Check Connection button must exist");
+  assert.ok(html.includes('id="status-timestamp"'), "Status timestamp element must exist");
   assert.ok(html.includes("popup.css"), "Must link stylesheet");
   assert.ok(html.includes("popup.js"), "Must load popup script");
 
@@ -101,6 +103,103 @@ test("popup files exist and contain required UI elements", () => {
   assert.ok(css.includes("--bg-canvas: #101315"), "Must share dark design system palette");
   assert.ok(css.includes("--status-connected"), "Must define connected state styling");
   assert.ok(css.includes("--status-offline"), "Must define offline state styling");
+});
+
+test("applyStatusResponse: handles status updates safely with null or present timestampEl", () => {
+  function createMockElement(initial = {}) {
+    return {
+      className: initial.className || "",
+      textContent: initial.textContent || ""
+    };
+  }
+
+  // 1. Success response with null timestampEl must not throw
+  const dot1 = createMockElement();
+  const text1 = createMockElement();
+  const hint1 = createMockElement();
+
+  assert.doesNotThrow(() => {
+    applyStatusResponse(
+      { ok: true, status: "connected", timestamp: "2026-11-19T14:30:00.000Z" },
+      {
+        statusDotEl: dot1,
+        statusTextEl: text1,
+        statusHintEl: hint1,
+        timestampEl: null
+      }
+    );
+  });
+  assert.equal(dot1.className, "status-dot status-connected");
+  assert.equal(text1.textContent, "Backend Connected");
+  assert.equal(hint1.textContent, "Ready to scan policies and verify clauses.");
+
+  // 2. Success response with valid timestampEl updates textContent
+  const dot2 = createMockElement();
+  const text2 = createMockElement();
+  const hint2 = createMockElement();
+  const time2 = createMockElement();
+
+  applyStatusResponse(
+    { ok: true, status: "connected", timestamp: "2026-11-19T14:30:00.000Z" },
+    {
+      statusDotEl: dot2,
+      statusTextEl: text2,
+      statusHintEl: hint2,
+      timestampEl: time2
+    }
+  );
+  assert.equal(dot2.className, "status-dot status-connected");
+  assert.ok(time2.textContent.length > 0);
+
+  // 3. Invalid timestamp does not throw and preserves state
+  const time3 = createMockElement({ textContent: "preserve" });
+  assert.doesNotThrow(() => {
+    applyStatusResponse(
+      { ok: true, status: "connected", timestamp: "invalid-date-string" },
+      { timestampEl: time3 }
+    );
+  });
+
+  // 4. Offline / Error response renders offline details and clears timestampEl safely
+  const dot4 = createMockElement();
+  const text4 = createMockElement();
+  const hint4 = createMockElement();
+  const time4 = createMockElement({ textContent: "10:00:00 AM" });
+
+  applyStatusResponse(
+    { ok: false, error: "Connection refused on port 3000" },
+    {
+      statusDotEl: dot4,
+      statusTextEl: text4,
+      statusHintEl: hint4,
+      timestampEl: time4
+    }
+  );
+  assert.equal(dot4.className, "status-dot status-offline");
+  assert.ok(text4.textContent.includes("Offline"));
+  assert.ok(hint4.textContent.includes("Connection refused"));
+  assert.equal(time4.textContent, "");
+
+  // 5. Auth required and CORS unconfigured responses set warning styling safely
+  const dot5 = createMockElement();
+  const text5 = createMockElement();
+  const hint5 = createMockElement();
+  applyStatusResponse(
+    { status: "auth_required" },
+    { statusDotEl: dot5, statusTextEl: text5, statusHintEl: hint5, timestampEl: null }
+  );
+  assert.equal(text5.textContent, "Authentication Required");
+  assert.ok(hint5.className.includes("is-warning"));
+
+  const dot6 = createMockElement();
+  const text6 = createMockElement();
+  const hint6 = createMockElement();
+  applyStatusResponse(
+    { status: "cors_unconfigured" },
+    { statusDotEl: dot6, statusTextEl: text6, statusHintEl: hint6, timestampEl: null }
+  );
+  assert.equal(text6.textContent, "CORS Not Configured");
+  assert.ok(hint6.className.includes("is-warning"));
 });
 
 /* ------------------------------------------------------------------

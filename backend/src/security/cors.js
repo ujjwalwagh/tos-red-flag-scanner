@@ -25,11 +25,11 @@ export function parseAllowedExtensionOrigins(rawConfig) {
   const allowed = new Set();
   if (!source) return allowed;
 
-  const rawList = Array.isArray(rawConfig) ? rawConfig : String(rawConfig).split(",");
+  const rawList = Array.isArray(source) ? source : String(source).split(",");
 
   for (const item of rawList) {
     if (typeof item === "string") {
-      const clean = item.trim().toLowerCase();
+      const clean = item.trim().replace(/\/+$/, "").toLowerCase();
       if (isValidChromeExtensionOrigin(clean)) {
         allowed.add(clean);
       }
@@ -55,6 +55,13 @@ export function isSameOrigin(origin, req) {
   if (host) {
     const hostLower = host.toLowerCase();
     if (originLower === `http://${hostLower}` || originLower === `https://${hostLower}`) {
+      return true;
+    }
+    const hostPort = hostLower.includes(":") ? hostLower.split(":")[1] : "";
+    if (
+      hostPort &&
+      (originLower === `http://localhost:${hostPort}` || originLower === `http://127.0.0.1:${hostPort}`)
+    ) {
       return true;
     }
   }
@@ -106,7 +113,7 @@ export function createCorsMiddleware(options = {}) {
         ? parseAllowedExtensionOrigins(options.allowedOrigins)
         : parseAllowedExtensionOrigins());
 
-    const originLower = origin.trim().toLowerCase();
+    const originLower = origin.trim().replace(/\/+$/, "").toLowerCase();
 
     // 4. Configured Chrome extension origin
     if (allowedSet.has(originLower)) {

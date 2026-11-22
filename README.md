@@ -24,31 +24,40 @@ Standard LLM solutions suffer from hallucinations, token truncation on 500+ clau
 - **Automated Legal Document Discovery:** Scans the active browser tab to identify Terms of Service, Paid Subscription Terms, Privacy Policies, Regional Privacy Links ("Do Not Sell"), and Central Legal Hubs.
 - **In-Place & Isolated Cross-Origin Extraction:** Extracts clean, readable text directly on-page or via isolated background tabs (closed immediately after extraction).
 - **Multi-Document Isolation:** Complete candidate-specific state isolation ensuring Terms, Subscription Terms, and Privacy Policies never share extraction state, risk reports, or Q&A histories.
+- **Dedicated SaaS Navigation & Views (Phase 9.3):** Unified dashboard with instant client-side switching across 4 primary interfaces:
+  - **Analyze:** Document intake (URL, PDF, Text), 14-category risk flags, readability, actionable checklists, amendment riders, and evidence-grounded Q&A.
+  - **Portfolio:** Multi-vendor software stack risk aggregator, weighted organizational exposure metrics, systemic risk concentrations, and head-to-head comparison matrices (2 to 5 vendors) with automated procurement recommendations.
+  - **Sentinel:** Policy drift and version monitor tracking chronological revisions, quantifying drift direction and magnitude, highlighting newly introduced restrictions or stripped rights, and rendering inline word-level redline diffs with session snapshot support.
+  - **Compliance (LexCheck):** Statutory regulatory audit evaluating contract terms against consumer protection mandates (US Federal FTC/FAA, California CCPA/CPRA, EU GDPR, UK Consumer Rights Act 2015, India Consumer Protection Act 2019) with formal legal citations, unenforceability flags, and actionable guidance.
 - **Deterministic 14-Category Risk Engine:** Instantly evaluates arbitration clauses, liability caps, unilateral modification clauses, auto-renewals, and content licensing.
 - **Readability & Grade-Level Scoring:** Computes Flesch-Kincaid Grade Level and Reading Ease scores for legal transparency.
 - **1,000-Clause Scalability:** Processes massive legal documents (e.g., Spotify Privacy Policy with 642+ clauses) using sequential batch chunking with atomic rollback.
 - **Oversized Document Consent:** Documents exceeding 100,000 characters require explicit user consent for partial scanning, eliminating silent truncation.
-- **Dual-Engine Q&A Orchestration:** Features both a proven procedural RAG pipeline and an advanced **LangChain.js & LangGraph.js State Machine** (`backend/src/rag/`) with structured output validation (`qaAnswerSchema`) and dynamic conditional routing.
+- **Dual-Engine Q&A Orchestration:** Features both a proven procedural RAG pipeline and an advanced **LangChain.js & LangGraph.js State Machine** (`backend/src/rag/`) with structured output validation (`qaAnswerSchema`) and dynamic conditional routing (controlled via `ENABLE_LANGGRAPH_QA`).
 - **At-Most-Once LLM Quota Protection:** Dual-engine integration safeguards prevent duplicate Gemini calls during downstream verification or network failures.
 - **Evidence-Grounded Q&A:** Gemini 2.5 Pro answers questions strictly using retrieved contract clauses.
 - **DeBERTa NLI Verification:** Independent cross-encoder verification (`cross-encoder/nli-deberta-v3-base`) scores entailment, contradiction, and neutrality for every generated answer.
 - **Accurate Vector Similarity Scores:** Formats genuine cosine similarities (`72%`, `67%`) and preserves unscored exception clauses (`Similarity unavailable`) without fabricating 0% scores.
 - **Zero-Retention Privacy:** No raw policy documents, user questions, or embeddings are permanently stored on disk. ChromaDB collections are deleted immediately after each query.
-- **Extension Security Boundary:** Strict sender validation prevents web pages from invoking extension actions or draining Gemini API quotas.
+- **Configurable Extension Options (Phase 8C.3D):** Dedicated Options page enables configuring custom backend URLs (HTTP localhost or remote HTTPS) and API Bearer tokens with live connection testing.
+- **Web App Settings Modal (Phase 8C.4B):** Web client includes a Settings modal for configuring backend endpoints, entering Bearer tokens, and testing connectivity.
+- **Tiered Rate Limiting & Abuse Prevention (Phase 8C.3C):** Protects heavy AI routes (10 req/min), ingestion (25 req/15min), and general API (100 req/15min).
+- **Internal Service Authentication (Phase 8C.3E):** Constant-time token verification (`X-Internal-Token`) secures server-to-server communication between Node.js and Python.
+- **Extension Security Boundary:** Strict sender validation (`SEC-EXT-1`) prevents web pages from invoking extension actions or draining Gemini API quotas.
 
 ---
 
 ## 3. Technology Stack
 
-- **Chrome Extension:** Chrome Manifest V3, ES Modules, `chrome.scripting`, `chrome.storage.session`.
-- **Frontend Web App:** Vanilla HTML5, CSS3 Glassmorphism design system, ES6+ JavaScript.
+- **Chrome & Edge Extension:** Manifest V3, ES Modules, `chrome.scripting`, `chrome.storage.session`, `chrome.storage.local`.
+- **Frontend Web App:** Vanilla HTML5, CSS3 Glassmorphism design system, ES6+ JavaScript, Centralized `api-client.js`.
 - **Backend API Gateway:** Node.js v22+, Express 5, Helmet, Express-Rate-Limit, Axios, Cheerio.
 - **RAG & Agentic Orchestration:** LangChain.js (`@langchain/core`, `@langchain/google-genai`), LangGraph.js (`@langchain/langgraph`), Zod structured schema validation.
 - **AI Microservice:** Python 3.13+, FastAPI, Uvicorn, PyTorch (CPU inference).
 - **Embeddings & Vector Store:** `sentence-transformers/all-MiniLM-L6-v2` (384-dimensional dense vectors), ChromaDB (ephemeral in-memory collections).
 - **NLI Verification:** `cross-encoder/nli-deberta-v3-base` (Sequence classification on CPU).
-- **Generative AI Provider:** Google Gemini API (`gemini-2.5-pro` with automatic flash failover).
-- **Testing:** Node.js native test runner (`node:test`), Pytest.
+- **Generative AI Provider:** Google Gemini API (`gemini-2.5-pro` with automatic flash failover to `gemini-flash-latest` / `gemini-flash-lite-latest`, and `NullProvider` zero-key fallback).
+- **Testing:** Node.js native test runner (`node:test`, 606 tests across 39 suites), Pytest (73 tests across 5 suites). Total: 679 passing tests.
 
 ---
 
@@ -89,51 +98,65 @@ D:\TOS red flag scanner/
 ├── package.json                     # Root orchestrator & scripts
 ├── scripts/
 │   ├── start.js                     # Unified concurrent process manager (npm start)
-│   └── test-all.js                  # Master Node.js test runner
+│   ├── test-all.js                  # Master Node.js test runner
+│   └── evaluate.js                  # Quantitative academic evaluation benchmark runner
 │
 ├── frontend/                        # Web dashboard client
 │   └── public/
-│       ├── index.html               # Main dashboard UI
-│       ├── app.js                   # Web application logic
+│       ├── index.html               # Main dashboard UI & Settings Modal
+│       ├── app.js                   # Web application logic & UI controllers
+│       ├── api-client.js            # Secure API client with Bearer auth & URL validation
 │       └── styles.css               # Design system styling
 │
 ├── backend/                         # Node.js Express API server (127.0.0.1:3000)
-│   ├── server.js                    # Express application entry point
+│   ├── server.js                    # Express application entry point & middleware mounting
 │   ├── src/
 │   │   ├── ai/                      # Gemini adapter, provider factory & Python bridge
 │   │   ├── analysis/                # Deterministic risk engine & readability
 │   │   ├── api/                     # Controllers and routes (/api/scan, /api/analyze/qa)
+│   │   ├── compliance/              # Statutory compliance auditor (US, CA, EU, UK)
+│   │   ├── config/                  # Environment loading & validation (env.js)
+│   │   ├── evaluation/              # Quantitative benchmark datasets & evaluators
 │   │   ├── ingestion/               # SSRF-safe URL fetching & PDF text extraction
+│   │   ├── portfolio/               # Multi-vendor portfolio risk & comparator
 │   │   ├── rag/                     # LangChain & LangGraph RAG orchestration (Phase 8B)
 │   │   │   ├── langchain/           # Prompts, schemas (Zod), and ChatGoogle adapter
 │   │   │   └── langgraph/           # State annotation, 6 graph nodes, conditional routing
-│   │   └── security/                # CORS middleware, loopback binding & SSRF validation
-│   └── tests/                       # 33 Node.js test suites (506 passing tests)
+│   │   ├── security/                # CORS, Bearer auth, tiered rate limits, origin validator
+│   │   └── sentinel/                # Policy drift engine, snapshot store, redline differ
+│   └── tests/                       # 38 Node.js test suites (601 passing tests)
 │
 ├── ai-service/                      # Python FastAPI microservice (127.0.0.1:8000)
 │   ├── app/
 │   │   ├── main.py                  # FastAPI application entry point & lifespan
+│   │   ├── config.py                # Environment configuration & internal auth settings
+│   │   ├── security/                # InternalTokenAuthMiddleware (X-Internal-Token)
 │   │   ├── services/
 │   │   │   ├── embedding_service.py # Sentence Transformers singleton
 │   │   │   ├── vector_store.py      # ChromaDB vector store service
 │   │   │   └── nli_service.py       # DeBERTa-v3 NLI verification engine
 │   │   └── routers/                 # Vector and NLI API endpoints
-│   └── tests/                       # Pytest test suite (61 passing tests)
+│   └── tests/                       # 5 Pytest suites (73 passing tests)
 │
-├── extension/                       # Chrome Manifest V3 Extension
-│   ├── manifest.json                # MV3 extension manifest
+├── extension/                       # Chrome & Edge Manifest V3 Extension
+│   ├── manifest.json                # MV3 extension manifest with options_ui
 │   ├── background/
 │   │   └── service-worker.js        # Background worker & SEC-EXT-1 sender validation
 │   ├── popup/
 │   │   ├── popup.html               # Extension popup UI
 │   │   ├── popup.js                 # Candidate registry & state management
 │   │   └── popup.css                # Compact extension styling
+│   ├── options/                     # Options page (Phase 8C.3D)
+│   │   ├── options.html             # Custom backend URL & Bearer token UI
+│   │   ├── options.js               # Options controller & connectivity tester
+│   │   └── options.css              # Options page styling
 │   ├── content/
 │   │   ├── content-script.js        # On-demand legal link detection
 │   │   └── dom-extractor.js         # Substantive text extraction
 │   └── utils/
 │       ├── detector-rules.js        # Detection heuristics & URL canonicalization
-│       └── extractor-core.js        # DOM extraction validation
+│       ├── extractor-core.js        # DOM extraction validation
+│       └── backend-config.js        # Dynamic backend configuration resolver
 │
 └── docs/                            # In-depth architectural & operational guides
     ├── ARCHITECTURE.md              # Complete technical architecture specification (v3.0)
@@ -179,14 +202,29 @@ D:\TOS red flag scanner/
    ```powershell
    Copy-Item .env.example .env
    ```
-   Edit `.env` and insert your Gemini API key:
+   Edit `.env` and configure your settings:
    ```env
+   # Generative AI Provider (Gemini 2.5 Pro)
    GEMINI_API_KEY=your_actual_gemini_api_key_here
    ENABLE_GEMINI_PROVIDER=true
+   GEMINI_MODEL=gemini-2.5-pro
+
+   # Core Express Server
    PORT=3000
+
+   # Python AI Microservice (127.0.0.1:8000)
    ENABLE_PYTHON_AI_SERVICE=true
    PYTHON_AI_SERVICE_URL=http://localhost:8000
-   ENABLE_LANGGRAPH_QA=false # Feature flag for LangGraph Q&A engine (defaults to false)
+   PYTHON_AI_SERVICE_TIMEOUT_MS=5000
+   PYTHON_AI_NLI_TIMEOUT_MS=15000
+   PYTHON_AI_STARTUP_TIMEOUT_MS=60000
+
+   # Controlled Orchestration & Security Flags (Defaults to false for zero-config local dev)
+   ENABLE_LANGGRAPH_QA=false
+   ENABLE_API_AUTH=false
+   API_BEARER_TOKEN=
+   ENABLE_INTERNAL_AUTH=false
+   INTERNAL_AI_SERVICE_TOKEN=
    ```
 
 ---
@@ -199,11 +237,12 @@ Launch both the Node.js backend (Port 3000) and Python AI service (Port 8000) co
 npm start
 ```
 
-The unified launcher will:
+The unified launcher (`scripts/start.js`) will:
 - Check for port collisions on 3000 and 8000.
 - Verify the Python virtual environment.
-- Pre-warm the DeBERTa NLI model on CPU.
-- Stream prefixed logs: `[BACKEND]` and `[PYTHON AI]`.
+- Pre-warm the DeBERTa NLI cross-encoder on CPU (with configurable readiness timeout, default: 60s).
+- Validate genuine readiness via JSON status probes (`status: "ok"`).
+- Stream cleanly prefixed logs: `[BACKEND]` and `[PYTHON AI]`.
 
 Web Application is available at: [http://localhost:3000](http://localhost:3000)  
 Backend Health Check: [http://localhost:3000/health](http://localhost:3000/health)  
@@ -211,17 +250,28 @@ Python AI Health Check: [http://localhost:8000/health](http://localhost:8000/hea
 
 ---
 
-## 8. Installing the Chrome Extension
+## 8. Installing the Chrome & Edge Extension
 
+The extension is built on Manifest V3 and runs seamlessly on Chromium browsers:
+
+### Google Chrome:
 1. Open Google Chrome and navigate to: `chrome://extensions/`
 2. Enable **Developer mode** via the toggle switch in the top-right corner.
 3. Click the **Load unpacked** button.
-4. Select the `extension` directory inside the project root:
-   ```text
-   D:\TOS red flag scanner\extension
-   ```
+4. Select the `extension` directory inside the project root (`D:\TOS red flag scanner\extension`).
 5. Pin the **TOS Red Flag Scanner** icon to your Chrome toolbar.
-6. Open the popup to verify backend connectivity (the status dot will turn green).
+
+### Microsoft Edge:
+1. Open Microsoft Edge and navigate to: `edge://extensions/`
+2. Turn on **Developer mode** toggle in the left navigation sidebar.
+3. If prompted, enable **Allow extensions from other stores**.
+4. Click **Load unpacked** and select the `extension` directory.
+5. Pin the extension to your Edge toolbar.
+
+### Extension Settings (Options Page):
+- Right-click the extension icon and select **Options** (or click the **⚙ Settings** button in the popup).
+- You can configure the Backend URL (default: `http://localhost:3000`) and input an API Bearer Token if `ENABLE_API_AUTH=true`.
+- Use the **Test Connection** button to verify end-to-end connectivity before scanning.
 
 ---
 
@@ -242,26 +292,50 @@ Python AI Health Check: [http://localhost:8000/health](http://localhost:8000/hea
 
 ## 10. Running Automated Tests
 
-Run the complete Node.js test suite (506 tests across 33 suites):
+Run the complete Node.js test suite (601 tests across 38 suites):
 ```powershell
 npm test
 ```
 
-Run the complete Python test suite (61 tests):
+Run the complete Python test suite (73 tests across 5 suites):
 ```powershell
-cd ai-service; ..\.venv\Scripts\python -m pytest tests/ -v; cd ..
+powershell -Command "cd ai-service; ..\.venv\Scripts\python -m pytest tests/ -v"
 ```
 
-**Total Test Coverage:** **567 tests passing, 0 failing, 0 skipped.**
+Run the Academic Quantitative Evaluation benchmark:
+```powershell
+node scripts/evaluate.js
+```
+
+**Total Automated Test Coverage:** **674 tests passing, 0 failing, 0 skipped (100% pass rate).**
 
 ---
 
-## 11. Known Limitations & Current Status
+## 11. Current Implementation Status & Feature Matrix
 
-- **Localhost Deployment Only:** The backend currently operates without API authentication (**SEC-BACK-1**). It is intended strictly for local execution (`localhost:3000` / `127.0.0.1:3000`). Public remote cloud exposure is not yet approved.
-- **CPU Inference Speed:** Running DeBERTa NLI cross-encoder inference on CPU takes ~1.5s to 3s per multi-clause Q&A request.
-- **100,000-Character Threshold:** Documents exceeding 100,000 characters require explicit user consent for partial scanning.
-- **Hardcoded Extension Origin:** The Chrome extension is configured for `http://localhost:3000/*` (**SEC-EXT-2**). An extension options page for dynamic server URLs will be introduced in future updates.
+### Implemented & Verified (Active in Production)
+- **14-Category Deterministic Risk Engine:** High-precision legal heuristic scoring.
+- **In-Situ DOM & Background Tab Extraction:** Clean substantive text extraction.
+- **Candidate Registry & Multi-Document Isolation:** Independent per-document session state in `chrome.storage.session`.
+- **Dense Vector Search & Ephemeral ChromaDB:** Unit-normalized 384-d embeddings with zero permanent storage.
+- **Gemini 2.5 Pro Generative Synthesis:** Grounded answers with automatic flash failover and NullProvider fallback.
+- **DeBERTa-v3 NLI Factual Verification:** Cross-encoder sequence classification with refusal bypass invariant.
+- **Foundational API Bearer Authentication (SEC-BACK-1):** Constant-time SHA-256 digest comparison supporting token rotation.
+- **Internal Service Authentication (Phase 8C.3E):** Server-to-server `X-Internal-Token` protecting Python AI routes.
+- **Tiered Rate Limiting (SEC-BACK-2):** Dedicated rate limit tiers for Heavy AI, Ingestion, and General API routes.
+- **Extension Options Page (SEC-EXT-2):** Dynamic server URL and token configuration with live connectivity probing.
+- **Web App Settings Modal (Phase 8C.4B):** Centralized `api-client.js` with dynamic backend resolution and credential masking.
+- **CORS & SEC-EXT-1 Security Boundaries:** Origin restriction to localhost and canonical extension IDs.
+
+### Partially Implemented / Controlled via Flags
+- **LangGraph State Machine (Phase 8B):** Fully implemented, verified, and tested in `backend/src/rag/langgraph/`. Controlled via `ENABLE_LANGGRAPH_QA=false` (the procedural RAG engine remains the active production default).
+- **Authentication Enforcement:** Auth middlewares are fully implemented in code, but default to `false` in `.env.example` (`ENABLE_API_AUTH=false`, `ENABLE_INTERNAL_AUTH=false`) to preserve zero-config local development workflows.
+- **Portfolio & Sentinel Modules (Phase 8):** Multi-vendor aggregation, temporal drift tracking, and statutory compliance auditing are implemented at the API level (`/api/portfolio/*`, `/api/sentinel/*`, `/api/compliance/*`), but currently lack dedicated UI views in the browser extension popup.
+
+### Planned & Deferred Features (Stage B / Stage C Roadmap)
+- **Remote Cloud Deployment & Containerization:** Multi-stage Docker container build and Cloud Run hosting.
+- **Chrome Web Store & Edge Store Publication:** Automated ZIP packaging and store single-purpose compliance declarations.
+- **GPU / Hardware Acceleration:** TensorRT or ONNX Runtime acceleration for DeBERTa NLI inference (currently runs on CPU in ~1.5s–3.0s).
 
 ---
 

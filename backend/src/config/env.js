@@ -52,7 +52,7 @@ export const config = {
     }
   },
   chromeExtension: {
-    origin: process.env.CHROME_EXTENSION_ORIGIN || ""
+    origin: process.env.CHROME_EXTENSION_ORIGIN || process.env.CHROME_EXTENSION_ORIGINS || ""
   },
   auth: {
     enabled: process.env.ENABLE_API_AUTH === "true",
@@ -78,6 +78,10 @@ export const config = {
     baseUrl: process.env.PYTHON_AI_SERVICE_URL || "http://localhost:8000",
     timeoutMs: parsePositiveInt(process.env.PYTHON_AI_SERVICE_TIMEOUT_MS, 5000),
     nliTimeoutMs: parsePositiveInt(process.env.PYTHON_AI_NLI_TIMEOUT_MS, 15000),
+    startupTimeoutMs: parsePositiveInt(
+      process.env.PYTHON_AI_STARTUP_TIMEOUT_MS || process.env.PYTHON_STARTUP_TIMEOUT_MS,
+      60000
+    ),
     internalToken: (process.env.INTERNAL_AI_SERVICE_TOKEN || "").trim()
   }
 };

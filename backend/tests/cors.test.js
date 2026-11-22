@@ -8,6 +8,7 @@ import {
   parseAllowedExtensionOrigins,
   createCorsMiddleware
 } from "../src/security/cors.js";
+import { config } from "../src/config/env.js";
 import { app } from "../server.js";
 
 // Valid 32-character Chrome extension ID using alphabet [a-p]
@@ -77,6 +78,26 @@ test("parseAllowedExtensionOrigins handles empty or missing input safely", () =>
   assert.equal(parseAllowedExtensionOrigins("").size, 0);
   assert.equal(parseAllowedExtensionOrigins(null).size, 0);
   assert.equal(parseAllowedExtensionOrigins(undefined).size, 0);
+});
+
+test("parseAllowedExtensionOrigins() with no arguments reads config.chromeExtension.origin", () => {
+  const orig = config.chromeExtension.origin;
+  try {
+    config.chromeExtension.origin = "chrome-extension://bnajpccjdeiegdlnadkbnpplcpahagoi,chrome-extension://dmpejhldcmhpoolofnlghicmhkecgfdj";
+    const defaultOrigins = parseAllowedExtensionOrigins();
+    assert.ok(defaultOrigins instanceof Set);
+    // Contains approved unpacked origin
+    assert.equal(defaultOrigins.has("chrome-extension://bnajpccjdeiegdlnadkbnpplcpahagoi"), true);
+    // Contains approved packed origin
+    assert.equal(defaultOrigins.has("chrome-extension://dmpejhldcmhpoolofnlghicmhkecgfdj"), true);
+    // Rejects unapproved origin
+    assert.equal(defaultOrigins.has("chrome-extension://cccccccccccccccccccccccccccccccc"), false);
+    // Normalizes trailing slashes safely
+    const originsWithSlash = parseAllowedExtensionOrigins("chrome-extension://bnajpccjdeiegdlnadkbnpplcpahagoi/");
+    assert.equal(originsWithSlash.has("chrome-extension://bnajpccjdeiegdlnadkbnpplcpahagoi"), true);
+  } finally {
+    config.chromeExtension.origin = orig;
+  }
 });
 
 /* ------------------------------------------------------------------
@@ -186,6 +207,8 @@ test("CORS middleware integration with configured extension origin", async () =>
  * ------------------------------------------------------------------ */
 
 test("Production app pipeline handles CORS, same-origin, and 1MB JSON limits", async () => {
+  const orig = config.chromeExtension.origin;
+  config.chromeExtension.origin = "chrome-extension://bnajpccjdeiegdlnadkbnpplcpahagoi,chrome-extension://dmpejhldcmhpoolofnlghicmhkecgfdj";
   const server = http.createServer(app);
   await new Promise((r) => server.listen(0, r));
   const port = server.address().port;
@@ -197,6 +220,53 @@ test("Production app pipeline handles CORS, same-origin, and 1MB JSON limits", a
     assert.equal(healthRes.status, 200);
     const healthData = await healthRes.json();
     assert.equal(healthData.status, "ok");
+
+    // 1b. Approved unpacked extension origin is accepted by production app
+    const approvedExtRes = await fetch(`${baseUrl}/health`, {
+      headers: { Origin: "chrome-extension://bnajpccjdeiegdlnadkbnpplcpahagoi" }
+    });
+    assert.equal(approvedExtRes.status, 200);
+    assert.equal(
+      approvedExtRes.headers.get("access-control-allow-origin"),
+      "chrome-extension://bnajpccjdeiegdlnadkbnpplcpahagoi"
+    );
+
+    // 1c. Approved packed extension origin is accepted by production app
+    const approvedPackedRes = await fetch(`${baseUrl}/health`, {
+      headers: { Origin: "chrome-extension://dmpejhldcmhpoolofnlghicmhkecgfdj" }
+    });
+    assert.equal(approvedPackedRes.status, 200);
+    assert.equal(
+      approvedPackedRes.headers.get("access-control-allow-origin"),
+      "chrome-extension://dmpejhldcmhpoolofnlghicmhkecgfdj"
+    );
+
+    // 1d. Approved extension origin preflight OPTIONS on /api route returns 204 with CORS headers
+    const approvedPreflight = await fetch(`${baseUrl}/api/analyze/categories`, {
+      method: "OPTIONS",
+      headers: {
+        Origin: "chrome-extension://bnajpccjdeiegdlnadkbnpplcpahagoi",
+        "Access-Control-Request-Method": "GET",
+        "Access-Control-Request-Headers": "Content-Type, Authorization"
+      }
+    });
+    assert.equal(approvedPreflight.status, 204);
+    assert.equal(
+      approvedPreflight.headers.get("access-control-allow-origin"),
+      "chrome-extension://bnajpccjdeiegdlnadkbnpplcpahagoi"
+    );
+    assert.ok(approvedPreflight.headers.get("access-control-allow-methods").includes("GET"));
+
+    // 1e. Existing localhost frontend origins (http://localhost:PORT and 127.0.0.1) accepted
+    const localhostRes = await fetch(`${baseUrl}/health`, {
+      headers: { Origin: `http://localhost:${port}` }
+    });
+    assert.equal(localhostRes.status, 200);
+
+    const loopbackRes = await fetch(`${baseUrl}/health`, {
+      headers: { Origin: `http://127.0.0.1:${port}` }
+    });
+    assert.equal(loopbackRes.status, 200);
 
     // 2. Arbitrary website origin is rejected by server with 403
     const blockedRes = await fetch(`${baseUrl}/api/analyze/categories`, {
@@ -225,10 +295,15 @@ test("Production app pipeline handles CORS, same-origin, and 1MB JSON limits", a
     const largePolicyText = paragraph.repeat(4200); // ~400KB
     assert.ok(largePolicyText.length > 300_000 && largePolicyText.length < 800_000);
 
+    const authHeader = (config.auth?.enabled && config.auth?.token)
+      ? { Authorization: `Bearer ${config.auth.token}` }
+      : {};
+
     const acceptedRes = await fetch(`${baseUrl}/api/scan`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...authHeader
       },
       body: JSON.stringify({ policyText: largePolicyText, scanMode: "broad" })
     });
@@ -244,7 +319,8 @@ test("Production app pipeline handles CORS, same-origin, and 1MB JSON limits", a
     const oversizedRes = await fetch(`${baseUrl}/api/scan`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json"
+        "Content-Type": "application/json",
+        ...authHeader
       },
       body: JSON.stringify({ policyText: oversizedText })
     });
@@ -257,6 +333,7 @@ test("Production app pipeline handles CORS, same-origin, and 1MB JSON limits", a
     const followUpRes = await fetch(`${baseUrl}/health`);
     assert.equal(followUpRes.status, 200);
   } finally {
+    config.chromeExtension.origin = orig;
     await new Promise((r) => server.close(r));
   }
 });

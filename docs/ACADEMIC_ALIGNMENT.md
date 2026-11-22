@@ -79,14 +79,14 @@ In legal contract analysis, standard direct LLM prompting fails for several reas
 
 ### 1.3 Why LangChain?
 [LangChain.js](file:///d:/TOS%20red%20flag%20scanner/backend/src/rag/langchain/) provides standardized abstractions for compound AI systems:
-- **Prompt Templating ([`backend/src/rag/langchain/prompts.js`](file:///d:/TOS%20red%20flag%20scanner/backend/src/rag/langchain/prompts.js)):** Formalizes role separation (System Instructions vs. User Evidence vs. Human Question) with input validation, preventing prompt injection and formatting drifts.
-- **Structured Output Parsing ([`backend/src/rag/langchain/schemas.js`](file:///d:/TOS%20red%20flag%20scanner/backend/src/rag/langchain/schemas.js)):** Uses Zod schemas (`qaAnswerSchema`) to enforce strict type checking on LLM outputs:
+- **Prompt Templating ([`backend/src/rag/langchain/prompt-templates.js`](file:///d:/TOS%20red%20flag%20scanner/backend/src/rag/langchain/prompt-templates.js)):** Formalizes role separation (System Instructions vs. User Evidence vs. Human Question) with input validation, preventing prompt injection and formatting drifts.
+- **Structured Output Parsing ([`backend/src/rag/langchain/output-schemas.js`](file:///d:/TOS%20red%20flag%20scanner/backend/src/rag/langchain/output-schemas.js)):** Uses Zod schemas (`qaAnswerSchema`) to enforce strict type checking on LLM outputs:
   - `grounded` (boolean)
   - `answer` (string)
   - `confidence` (float between 0 and 1)
   - `citedClauses` (array of integers)
   - `reason` (nullable string)
-- **Model Adapter Abstraction ([`backend/src/rag/langchain/model.js`](file:///d:/TOS%20red%20flag%20scanner/backend/src/rag/langchain/model.js)):** Wraps `@langchain/google-genai` (`ChatGoogleGenerativeAI`), enabling seamless swapping or failover between models (e.g., `gemini-2.5-pro` to `gemini-2.5-flash`) without modifying downstream business logic.
+- **Model Adapter Abstraction ([`backend/src/rag/langchain/model-adapter.js`](file:///d:/TOS%20red%20flag%20scanner/backend/src/rag/langchain/model-adapter.js)):** Wraps `@langchain/google` (`ChatGoogle`), enabling seamless swapping or failover between models without modifying downstream business logic.
 
 ### 1.4 Why LangGraph?
 While LangChain organizes components, complex multi-step pipelines require explicit **control flow orchestration**. Standard procedural code (nested `if/else`, loops, and sequential `try/catch` blocks) becomes fragile when handling:
@@ -226,7 +226,7 @@ While LangChain organizes components, complex multi-step pipelines require expli
 
 ### Q8: How do you prevent the dual-engine architecture from calling Gemini twice and consuming double the API quota?
 > **Answer:**  
-> In [`backend/src/api/qaDocumentController.js`](file:///d:/TOS%20red%20flag%20scanner/backend/src/api/qaDocumentController.js), the function `executeLangGraphQa` implements an **At-Most-Once Call Boundary**:
+> In [`backend/src/api/controllers/analyze.controller.js`](file:///d:/TOS%20red%20flag%20scanner/backend/src/api/controllers/analyze.controller.js), the function `executeLangGraphQa` implements an **At-Most-Once Call Boundary**:
 > 1. It maintains a closure variable `geminiCalled = false` and stores `geminiResult`.
 > 2. Inside the LangGraph state machine, the `generate` node sets `state.geminiCalled = true`.
 > 3. If an error occurs in a downstream node *after* Gemini has successfully responded (e.g., a timeout or network glitch during Python NLI verification in the `verify` node), the catch block inspects `geminiCalled`.

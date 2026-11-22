@@ -151,3 +151,29 @@ The background rendering is 100% stable, deterministic, and flicker-free:
   - Pressing the `Escape` key.
 - **Event Isolation**: Dismiss handlers use `e.preventDefault()` and `e.stopPropagation()` to prevent duplicate event bubbling or unintended page mutations.
 - **CSP Compliance**: 100% of event handlers are bound via `addEventListener` in `app.js`. Zero inline `onclick` or style attributes exist.
+
+---
+
+## 9. Phase 9.3 SaaS View Navigation Architecture & Components
+
+In Phase 9.3, the application was upgraded to a modern, first-class SaaS dashboard layout featuring instant client-side switching across 4 primary interfaces:
+
+### 9.1 Topbar Navigation System
+- `.nav-tabs-group`: Segmented pill controller in the top navigation bar with icons and text labels.
+- `.nav-tab`: Interactive tab buttons for `#nav-tab-analyze`, `#nav-tab-portfolio`, `#nav-tab-sentinel`, and `#nav-tab-compliance`.
+- `.nav-tab.active`: Highlights the active view using `--surface-raised` background and `--border-default`.
+
+### 9.2 View Containers (`.app-view`)
+- `.app-view`: Display block with a subtle `fadeIn` animation (0.18s ease-out).
+- `.app-view.hidden`: Evaluates to `display: none !important;` to ensure inactive views do not occupy layout space or interfere with focus order.
+- Views:
+  1. `#view-analyze`: Document intake (URL, PDF, Text), 14-category risk flags, readability, checklists, export toolbar, and grounded Q&A.
+  2. `#view-portfolio`: Active vendor stack manager (`.vendor-stack-card`), Aggregate score gauge (`.portfolio-gauge`), Systemic exposures (`.systemic-card`), Vendor rankings (`.vendor-rank-item`), and Head-to-head comparison matrix (`.matrix-table`, `.procurement-rec-banner`).
+  3. `#view-sentinel`: Revision drift comparator, Snapshot controls, Direction badge (`.drift-badge-restrictive`, `.drift-badge-favorable`, `.drift-badge-neutral`), Added vs. Removed restriction boxes (`.drift-box-added`, `.drift-box-removed`), and inline word redlines (`.diff-content-view del`, `.diff-content-view ins`).
+  4. `#view-compliance`: Statutory compliance audit (LexCheck), Dynamic regulatory jurisdiction selector, Standby/custom source toggle, Compliance standing badges, and Statutory citation cards (`.statutory-alert-item`, `.statutory-citation`).
+
+### 9.3 Strict Accessibility & Zero-CSP Rules
+- Every form input, select, and textarea has a dedicated `<label for="...">`.
+- All buttons define `type="button"`.
+- Zero inline styles (`style="..."`) and zero inline event handlers (`onclick`, `onsubmit`).
+- Responsive layout with CSS grid auto-fill rules adapting seamlessly to mobile and desktop screens.

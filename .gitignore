@@ -10,9 +10,33 @@ env/
 .env.*
 *.env
 backend/.env
+ai-service/.env
 !.env.example
 !backend/.env.example
 !ai-service/.env.example
+
+# Private Keys, Certificates & Credentials
+*.pem
+*.key
+*.cert
+*.crt
+*.pfx
+*.p12
+credentials.json
+client_secret*.json
+service-account*.json
+secrets.json
+
+# Backup & Temporary Files
+*.bak
+*.backup
+*.old
+*.orig
+*.swp
+*~
+*.tmp
+temp_*.mjs
+temp_*.js
 
 # Python Compiled Artifacts & Caches
 __pycache__/
@@ -22,8 +46,26 @@ __pycache__/
 .pytest_cache/
 **/.pytest_cache/
 
+# Vector Stores, Weights & Model Caches
+chroma_db/
+*.chroma
+.cache/
+**/.cache/
+
 # Distribution & Build Outputs
 dist/
 build/
 coverage/
 .nyc_output/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS & Editor Metadata
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
