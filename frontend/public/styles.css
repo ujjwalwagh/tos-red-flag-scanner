@@ -76,8 +76,11 @@
 }
 
 html {
-  font-size: 15px;
+  font-size: 16px;
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
 }
 
 body {
@@ -93,6 +96,9 @@ body {
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
 }
 
 /* Neutralized Decorative Elements */
@@ -115,6 +121,9 @@ body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Top Navigation Bar */
@@ -130,10 +139,10 @@ body {
 }
 
 .topbar-inner {
-  max-width: 1120px;
+  max-width: 1240px;
   height: 100%;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 2rem;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -185,44 +194,44 @@ body {
 .shell {
   flex: 1;
   width: 100%;
-  max-width: 1040px;
+  max-width: 1240px;
   margin: 0 auto;
-  padding: 2.5rem 1.5rem 4rem;
+  padding: 2.75rem 2rem 5rem;
 }
 
 /* Hero Section */
 .hero {
   text-align: center;
-  margin-bottom: 2.5rem;
+  margin-bottom: 2.75rem;
 }
 
 .hero-eyebrow {
   display: inline-block;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.15em;
   color: var(--accent-primary);
-  margin-bottom: 0.75rem;
+  margin-bottom: 0.85rem;
 }
 
 .hero-title {
   margin: 0 auto 0.85rem;
   font-family: var(--font-serif);
-  font-size: clamp(2rem, 4vw, 2.75rem);
+  font-size: clamp(2.2rem, 3.5vw, 3rem);
   font-weight: 600;
   line-height: 1.18;
   letter-spacing: -0.02em;
   color: var(--text-primary);
-  max-width: 22ch;
+  max-width: 26ch;
 }
 
 .hero-lead {
   margin: 0 auto;
-  font-size: 1.05rem;
-  line-height: 1.6;
+  font-size: 1.08rem;
+  line-height: 1.62;
   color: var(--text-muted);
-  max-width: 58ch;
+  max-width: 66ch;
 }
 
 /* Centered Document Intake Workspace */
@@ -231,7 +240,7 @@ body {
   border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-md);
-  padding: 1.75rem 2rem 2rem;
+  padding: 2rem 2.25rem 2.25rem;
   margin-bottom: 2rem;
   position: relative;
 }
@@ -1750,9 +1759,20 @@ body {
 }
 
 /* Responsive Breakpoints */
+@media (min-width: 1440px) {
+  .topbar-inner,
+  .shell {
+    max-width: 1280px;
+  }
+}
+
 @media (max-width: 768px) {
   html {
     font-size: 14px;
+  }
+
+  .topbar-inner {
+    padding: 0 1rem;
   }
 
   .shell {

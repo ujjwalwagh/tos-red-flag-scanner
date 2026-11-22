@@ -184,13 +184,6 @@ function formatBytes(bytes) {
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
 }
 
-window.addEventListener("mousemove", (event) => {
-  if (cursorGlow) {
-    cursorGlow.style.left = `${event.clientX}px`;
-    cursorGlow.style.top = `${event.clientY}px`;
-  }
-});
-
 window.addEventListener("resize", resizeSparkCanvas);
 resizeSparkCanvas();
 initBackgroundVideo();
