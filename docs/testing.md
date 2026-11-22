@@ -19,7 +19,10 @@ node scripts/test-all.js
 
 ## 2. Test Suites & Coverage Breakdown
 
-The test suite consists of **118 passing automated tests** across **11 test suites**:
+> [!NOTE]
+> The table below captures the initial Phase 3 test suite baseline (118 tests across 11 suites). As of Phase 9.5, the comprehensive test suite has expanded to **690 automated tests** (617 Node.js backend tests across 40 suites + 73 Python AI service tests across 5 files). See [docs/architecture.md](architecture.md) and [docs/phases/phase-9.5-release-readiness-audit.md](phases/phase-9.5-release-readiness-audit.md) for the complete verified release breakdown.
+
+The initial foundational test suite consists of **118 passing automated tests** across **11 test suites**:
 
 | Test Suite File | Tests | Focus Area | Scope & Assertions |
 | :--- | :---: | :--- | :--- |

@@ -57,7 +57,7 @@ Standard LLM solutions suffer from hallucinations, token truncation on 500+ clau
 - **Embeddings & Vector Store:** `sentence-transformers/all-MiniLM-L6-v2` (384-dimensional dense vectors), ChromaDB (ephemeral in-memory collections).
 - **NLI Verification:** `cross-encoder/nli-deberta-v3-base` (Sequence classification on CPU).
 - **Generative AI Provider:** Google Gemini API (`gemini-2.5-pro` with automatic flash failover to `gemini-flash-latest` / `gemini-flash-lite-latest`, and `NullProvider` zero-key fallback).
-- **Testing:** Node.js native test runner (`node:test`, 606 tests across 39 suites), Pytest (73 tests across 5 suites). Total: 679 passing tests.
+- **Testing:** Node.js native test runner (`node:test`, 617 tests across 40 suites), Pytest (73 tests across 5 suites). Total: 690 passing tests.
 
 ---
 
@@ -124,7 +124,7 @@ D:\TOS red flag scanner/
 │   │   │   └── langgraph/           # State annotation, 6 graph nodes, conditional routing
 │   │   ├── security/                # CORS, Bearer auth, tiered rate limits, origin validator
 │   │   └── sentinel/                # Policy drift engine, snapshot store, redline differ
-│   └── tests/                       # 38 Node.js test suites (601 passing tests)
+│   └── tests/                       # 40 Node.js test suites (617 passing tests)
 │
 ├── ai-service/                      # Python FastAPI microservice (127.0.0.1:8000)
 │   ├── app/
@@ -292,7 +292,7 @@ The extension is built on Manifest V3 and runs seamlessly on Chromium browsers:
 
 ## 10. Running Automated Tests
 
-Run the complete Node.js test suite (601 tests across 38 suites):
+Run the complete Node.js test suite (617 tests across 40 suites):
 ```powershell
 npm test
 ```
@@ -307,7 +307,7 @@ Run the Academic Quantitative Evaluation benchmark:
 node scripts/evaluate.js
 ```
 
-**Total Automated Test Coverage:** **674 tests passing, 0 failing, 0 skipped (100% pass rate).**
+**Total Automated Test Coverage:** **690 tests passing, 0 failing, 0 skipped (100% pass rate: 617 Node.js backend + 73 Python AI service).**
 
 ---
 

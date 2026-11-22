@@ -358,30 +358,30 @@ Phase 9.3 established a cohesive client-side SaaS view navigation architecture i
 
 ## 9. Comprehensive Test Suite Verification
 
-As of Phase 9.3, the entire application test suite has been verified with a **100% pass rate**:
+As of Phase 9.5, the entire application test suite has been verified with a **100% pass rate**:
 
 ```text
 Node.js Master Test Runner (npm test):
-  Total Tests:  606
-  Test Suites:  39
-  Passed:       606
+  Total Tests:  617
+  Test Suites:  40
+  Passed:       617
   Failed:       0
-  Duration:     ~4.6s
+  Duration:     ~4.7s
 
 Python Pytest Suite (pytest ai-service/tests):
   Total Tests:  73
   Test Files:   5
   Passed:       73
   Failed:       0
-  Duration:     ~24.8s
+  Duration:     ~22.9s
 
 Quantitative Academic Evaluation (scripts/evaluate.js):
   Personalized Ranking Precision@5:  99.00%  (Target: >= 85%) -> MET
   Personalized Ranking Recall@5:     99.00%  (Target: >= 85%) -> MET
-  ToS Change Magnitude Macro-F1:     94.18%  (Target: >= 85%) -> MET
-  User Risk Delta Macro-F1:          96.58%  (Target: >= 85%) -> MET
+  ToS Change Magnitude Macro-F1:     92.06%  (Target: >= 85%) -> MET
+  User Risk Delta Macro-F1:         100.00%  (Target: >= 85%) -> MET
 
-Combined Automated Baseline: 679 / 679 Tests Passing (100% Pass Rate)
+Combined Automated Baseline: 690 / 690 Tests Passing (100% Pass Rate)
 ```
 
 The system is fully documented, tested, and aligned with academic and technical standards.

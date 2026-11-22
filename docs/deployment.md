@@ -252,9 +252,9 @@ curl http://127.0.0.1:8000/health
 
 Before deploying updates or promoting to production traffic, execute the following verification steps:
 
-- [ ] **Node.js Master Test Suite:** `npm test` passes all **601 automated tests across 38 suites** with 0 failures.
-- [ ] **Python AI Service Test Suite:** `pytest ai-service/tests` passes all **73 tests across 5 suites** with 0 failures.
-- [ ] **Academic Evaluation Benchmarks:** `node scripts/evaluate.js` meets all targets ($\ge 85\%$).
+- [ ] **Node.js Master Test Suite:** `npm test` passes all **617 automated tests across 40 suites** with 0 failures.
+- [ ] **Python AI Service Test Suite:** `pytest ai-service/tests` passes all **73 tests across 5 suites** with 0 failures (totaling 690 passing automated tests combined).
+- [ ] **Academic Evaluation Benchmarks:** `node scripts/evaluate.js` meets all targets ($P@5 \ge 85\%$, $R@5 \ge 85\%$, Macro-$F1 \ge 85\%$, Delta-$F1 \ge 85\%$).
 - [ ] **Backend Health Probe:** `GET /health` returns HTTP 200 `{ status: "ok" }`.
 - [ ] **Python AI Health Probe:** `GET http://127.0.0.1:8000/health` returns `{ status: "ok", model_loaded: true, nli_status: "ready" }`.
 - [ ] **Content Security Policy (CSP):** Verified Helmet CSP headers active with no console CSP violations.
