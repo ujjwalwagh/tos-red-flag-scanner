@@ -17,7 +17,6 @@ const summaryEl = document.querySelector("#summary");
 const readabilityEl = document.querySelector("#readability");
 const resultsEl = document.querySelector("#results");
 const scanBtn = document.querySelector("#scan-btn");
-const cursorGlow = document.querySelector("#cursor-glow");
 const sparkCanvas = document.querySelector("#spark-layer");
 const sparkCtx = sparkCanvas.getContext("2d");
 const template = document.querySelector("#flag-template");
@@ -182,6 +181,19 @@ function formatBytes(bytes) {
   const units = ["B", "KB", "MB", "GB"];
   const i = Math.floor(Math.log(bytes) / Math.log(1024));
   return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+}
+
+// Strict desktop horizontal stability lock
+if (typeof window !== "undefined" && typeof window.addEventListener === "function") {
+  window.addEventListener(
+    "scroll",
+    () => {
+      if (typeof window.scrollX === "number" && window.scrollX !== 0 && typeof window.scrollTo === "function") {
+        window.scrollTo({ left: 0, top: window.scrollY });
+      }
+    },
+    { passive: true }
+  );
 }
 
 window.addEventListener("resize", resizeSparkCanvas);
@@ -752,61 +764,15 @@ function wireReactionButtons(card) {
 }
 
 function enableDragForExistingNotes() {
-  const notes = document.querySelectorAll(".note");
-  notes.forEach((note) => enableDrag(note));
+  // Stationary presentation layout: draggable motion disabled for cursor stability
 }
 
 function enableDrag(element) {
-  let dragging = false;
-  let startX = 0;
-  let startY = 0;
-  let offsetX = Number(element.dataset.dx || 0);
-  let offsetY = Number(element.dataset.dy || 0);
-
-  element.addEventListener("pointerdown", (event) => {
-    if (event.target.closest(".react-btn")) {
-      return;
-    }
-    dragging = true;
-    element.classList.add("dragging");
-    startX = event.clientX - offsetX;
-    startY = event.clientY - offsetY;
-    element.setPointerCapture(event.pointerId);
-  });
-
-  element.addEventListener("pointermove", (event) => {
-    if (!dragging) return;
-    offsetX = event.clientX - startX;
-    offsetY = event.clientY - startY;
-    element.dataset.dx = String(offsetX);
-    element.dataset.dy = String(offsetY);
-    applyDragTransform(element, offsetX, offsetY);
-  });
-
-  const release = () => {
-    dragging = false;
-    element.classList.remove("dragging");
-  };
-
-  element.addEventListener("pointerup", release);
-  element.addEventListener("pointercancel", release);
+  // Stationary presentation layout: draggable motion disabled for cursor stability
 }
 
 function applyDragTransform(element, x, y) {
-  const hasRotate = /rotate\([^)]*\)/.test(element.style.transform);
-  if (hasRotate) {
-    element.style.transform = element.style.transform.replace(
-      /translate\([^)]*\)/,
-      ""
-    );
-    element.style.transform += ` translate(${x}px, ${y}px)`;
-    return;
-  }
-
-  const rotate = element.classList.contains("note")
-    ? element.style.transform || ""
-    : "";
-  element.style.transform = `${rotate} translate(${x}px, ${y}px)`.trim();
+  // Stationary presentation layout: draggable motion disabled for cursor stability
 }
 
 function resizeSparkCanvas() {

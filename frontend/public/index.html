@@ -26,7 +26,7 @@
     <meta name="theme-color" content="#101315" />
     <link rel="icon" type="image/svg+xml" href="/logo.svg" />
     <link rel="apple-touch-icon" href="/logo.svg" />
-    <link rel="stylesheet" href="./styles.css?v=20261008a" />
+    <link rel="stylesheet" href="./styles.css?v=20261123c" />
   </head>
   <body>
     <!-- Background elements preserved for functional safety -->
@@ -58,53 +58,53 @@
             <img src="/logo.svg" alt="" class="brand-logo" width="28" height="28" />
             <span class="brand-name">TOS Red Flag Scanner</span>
           </div>
+          <div class="nav-tabs-group" role="tablist" aria-label="Product Views">
+            <button
+              type="button"
+              role="tab"
+              id="nav-tab-analyze"
+              class="nav-tab active"
+              aria-selected="true"
+              aria-controls="view-analyze"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+              <span>Analyze</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="nav-tab-portfolio"
+              class="nav-tab"
+              aria-selected="false"
+              aria-controls="view-portfolio"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
+              <span>Portfolio</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="nav-tab-sentinel"
+              class="nav-tab"
+              aria-selected="false"
+              aria-controls="view-sentinel"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span>Sentinel</span>
+            </button>
+            <button
+              type="button"
+              role="tab"
+              id="nav-tab-compliance"
+              class="nav-tab"
+              aria-selected="false"
+              aria-controls="view-compliance"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 21 18 0"/><path d="m5 21 0-14 8-4 8 4 0 14"/><path d="m9 10 0 2"/><path d="m9 16 0 2"/><path d="m15 10 0 2"/><path d="m15 16 0 2"/></svg>
+              <span>Compliance</span>
+            </button>
+          </div>
           <nav class="topbar-nav" aria-label="Main Navigation">
-            <div class="nav-tabs-group" role="tablist" aria-label="Product Views">
-              <button
-                type="button"
-                role="tab"
-                id="nav-tab-analyze"
-                class="nav-tab active"
-                aria-selected="true"
-                aria-controls="view-analyze"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-                <span>Analyze</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="nav-tab-portfolio"
-                class="nav-tab"
-                aria-selected="false"
-                aria-controls="view-portfolio"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></svg>
-                <span>Portfolio</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="nav-tab-sentinel"
-                class="nav-tab"
-                aria-selected="false"
-                aria-controls="view-sentinel"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-                <span>Sentinel</span>
-              </button>
-              <button
-                type="button"
-                role="tab"
-                id="nav-tab-compliance"
-                class="nav-tab"
-                aria-selected="false"
-                aria-controls="view-compliance"
-              >
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 21 18 0"/><path d="m5 21 0-14 8-4 8 4 0 14"/><path d="m9 10 0 2"/><path d="m9 16 0 2"/><path d="m15 10 0 2"/><path d="m15 16 0 2"/></svg>
-                <span>Compliance</span>
-              </button>
-            </div>
             <div class="nav-actions-group">
               <a href="#how-it-works" class="nav-link">How it works</a>
               <a href="#about" class="nav-link">About</a>
@@ -710,7 +710,9 @@
       </main>
 
       <footer class="app-footer">
-        <p>TOS Red Flag Scanner &bull; Professional Document Intelligence &bull; Zero-Retention Runtime</p>
+        <div class="footer-inner">
+          <p>TOS Red Flag Scanner &bull; Professional Document Intelligence &bull; Zero-Retention Runtime</p>
+        </div>
       </footer>
     </div>
 
@@ -1005,6 +1007,6 @@
       </div>
     </div>
 
-    <script type="module" src="./app.js?v=20261008a"></script>
+    <script type="module" src="./app.js?v=20261123c"></script>
   </body>
 </html>
