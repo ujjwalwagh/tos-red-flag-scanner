@@ -124,8 +124,9 @@ app.use((error, req, res, next) => {
 let serverInstance = null;
 const isDirectRun = Boolean(process.argv[1] && path.resolve(process.argv[1]) === path.resolve(__filename));
 if (isDirectRun) {
-  serverInstance = app.listen(port, "127.0.0.1", () => {
-    console.log(`ToS scanner running at http://127.0.0.1:${port}`);
+  const host = process.env.HOST || "0.0.0.0";
+  serverInstance = app.listen(port, host, () => {
+    console.log(`ToS scanner running at http://${host}:${port}`);
   });
 }
 
