@@ -10,11 +10,30 @@ import { AppError } from "../security/security.js";
 import { normalizeCategoryId, getRiskCategory } from "../analysis/risk-categories.js";
 import { computeWordDiff } from "../negotiation/redline-differ.js";
 import { analyzeDocument } from "../architecture/pipeline/analysis-pipeline.js";
+import { normalizeText, countWords, countCharacters } from "../processing/normalization/text-normalizer.js";
+import { segmentDocumentPages } from "../processing/segmentation/clause-segmenter.js";
 
 export const SENTINEL_DISCLAIMER =
   "LEGAL DISCLAIMER: Policy drift and version comparison metrics are automated analytical " +
   "estimations of textual revisions. They do not constitute formal legal counsel. Contractual rights " +
   "may be affected by bilateral notice rules, user acceptance mechanisms, or statutory non-retroactivity.";
+
+function createDriftDocument(filename, text) {
+  const normalized = normalizeText(text);
+  const pages = [{ pageNumber: 1, rawText: text, normalizedText: normalized, text }];
+  return {
+    metadata: {
+      filename,
+      pageCount: 1,
+      wordCount: countWords(normalized),
+      characterCount: countCharacters(normalized)
+    },
+    pages,
+    segments: segmentDocumentPages(pages),
+    normalizedText: normalized,
+    rawText: text
+  };
+}
 
 /**
  * Calculates policy drift between two historical policy versions.
@@ -42,20 +61,14 @@ export async function calculatePolicyDrift(params = {}) {
   // Obtain findings for base version
   let baseFindings = Array.isArray(baseVer.findings) ? baseVer.findings : [];
   if (baseFindings.length === 0 && basePolicyText.trim()) {
-    const analysis = await analyzeDocument({
-      metadata: { filename: `${vendorName}-${baseLabel}` },
-      pages: [{ pageNumber: 1, text: basePolicyText }]
-    });
+    const analysis = await analyzeDocument(createDriftDocument(`${vendorName}-${baseLabel}`, basePolicyText));
     baseFindings = analysis.rankedFindings || analysis.findings || [];
   }
 
   // Obtain findings for current version
   let currentFindings = Array.isArray(currentVer.findings) ? currentVer.findings : [];
   if (currentFindings.length === 0 && currentPolicyText.trim()) {
-    const analysis = await analyzeDocument({
-      metadata: { filename: `${vendorName}-${currentLabel}` },
-      pages: [{ pageNumber: 1, text: currentPolicyText }]
-    });
+    const analysis = await analyzeDocument(createDriftDocument(`${vendorName}-${currentLabel}`, currentPolicyText));
     currentFindings = analysis.rankedFindings || analysis.findings || [];
   }
 

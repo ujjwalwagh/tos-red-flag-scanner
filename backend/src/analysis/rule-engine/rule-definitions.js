@@ -237,14 +237,15 @@ export const RULE_DEFINITIONS = [
     description: "Authorizes sharing, licensing, or commercial distribution of personal or behavioral data with third parties.",
     explanation: "This clause notes that user information, usage telemetry, or identifiers may be shared with or sold to third-party commercial partners, affiliates, or advertising networks.",
     patterns: [
-      /\bshare\s+(?:your\s+)?(?:personal\s+)?(?:data|information|details)\s+with\s+(?:third\s+parties|advertising\s+partners|marketing\s+affiliates)\b/i,
-      /\bdisclose\s+(?:personal\s+)?information\s+to\s+(?:third-party\s+vendors|commercial\s+partners|advertisers)\b/i,
+      /\bshare\s+(?:your\s+)?(?:personal\s+)?(?:data|information|details)\s+with\s+(?:third[- ]parties|third[- ]party\s+(?:advertising\s+partners|marketing\s+affiliates|partners|vendors)|advertising\s+partners|marketing\s+affiliates)\b/i,
+      /\bdisclose\s+(?:personal\s+)?information\s+to\s+(?:third[- ]party\s+vendors|commercial\s+partners|advertisers)\b/i,
       /\bsale\s+(?:or\s+sharing\s+)?of\s+personal\s+(?:data|information)\b/i,
       /\bprovide\s+your\s+(?:data|information)\s+to\s+third\s+parties\s+for\s+(?:targeted\s+advertising|promotional\s+purposes)\b/i
     ],
     secondaryKeywords: ["third parties", "advertising partners", "commercial", "monetize", "analytics"],
     negativePatterns: [
-      /\bwe\s+do\s+not\s+(?:sell|share)\s+(?:your\s+)?(?:personal\s+)?(?:information|data)\b/i,
+      /\b(?:we\s+)?(?:do\s+not|will\s+not|shall\s+not|never)\s+(?:sell|share)\s+(?:your\s+)?(?:personal\s+)?(?:information|data)\b/i,
+      /\b(?:will\s+not|shall\s+not|do\s+not|never)\s+share\b.*?\bwithout\s+(?:user\s+|your\s+|express\s+|prior\s+)?consent\b/i,
       /\bwe\s+respect\s+your\s+privacy\b/i, // contextual false positive check
       /\bsolely\s+with\s+essential\s+infrastructure\s+processors\b/i
     ],

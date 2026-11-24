@@ -41,9 +41,9 @@ export function segmentDocumentPages(pages) {
 
   for (const page of pages) {
     const pageNumber = page.pageNumber || 1;
-    const pageText = page.normalizedText || "";
+    const pageText = (page.normalizedText || page.text || page.rawText || "").trim();
 
-    if (!pageText.trim()) {
+    if (!pageText) {
       continue;
     }
 
@@ -92,15 +92,16 @@ export function segmentDocumentPages(pages) {
   // If no structured segments were identified (e.g. dense continuous text), fallback to page-level blocks
   if (segments.length === 0) {
     pages.forEach((page, idx) => {
-      if (page.normalizedText && page.normalizedText.trim()) {
+      const fallbackText = (page.normalizedText || page.text || page.rawText || "").trim();
+      if (fallbackText) {
         segments.push({
           segmentIndex: idx,
-          pageNumber: page.pageNumber,
-          title: `Page ${page.pageNumber} Content`,
+          pageNumber: page.pageNumber || 1,
+          title: `Page ${page.pageNumber || 1} Content`,
           clauseCategory: "general",
-          text: page.normalizedText,
-          wordCount: countWords(page.normalizedText),
-          charCount: countCharacters(page.normalizedText)
+          text: fallbackText,
+          wordCount: countWords(fallbackText),
+          charCount: countCharacters(fallbackText)
         });
       }
     });

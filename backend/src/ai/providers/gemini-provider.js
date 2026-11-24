@@ -47,6 +47,35 @@ function shouldFailover(error) {
   return false;
 }
 
+/**
+ * Emits a sanitized, safe JSON diagnostic log for a failed Gemini model attempt.
+ * Strictly adheres to privacy constraints: never logs API keys, headers, prompt payloads,
+ * user questions, or document text.
+ *
+ * @param {string} model - Target model ID
+ * @param {any} error - Caught error object
+ * @param {boolean} willFailover - Whether the provider will attempt another model
+ * @returns {Object} The sanitized diagnostic object
+ */
+export function logGeminiAttemptError(model, error, willFailover) {
+  const status = typeof error?.response?.status === "number" ? error.response.status : null;
+  const errorCode = error?.response?.data?.error?.status || error?.response?.data?.error?.code || error?.code || null;
+  const rawMsg = error?.response?.data?.error?.message || error?.message || "Unknown provider error";
+  const sanitizedMsg = String(rawMsg).replace(/[\r\n\t]+/g, " ").trim().slice(0, 160);
+
+  const diagnostic = {
+    event: "gemini_attempt_failed",
+    model: String(model || "unknown"),
+    status,
+    errorCode: errorCode ? String(errorCode) : null,
+    message: sanitizedMsg,
+    willFailover: Boolean(willFailover)
+  };
+
+  console.warn(JSON.stringify(diagnostic));
+  return diagnostic;
+}
+
 export class GeminiProvider {
   /**
    * @param {Object} [options={}]
@@ -123,7 +152,9 @@ export class GeminiProvider {
         });
       } catch (error) {
         lastError = error;
-        if (shouldFailover(error) && !isLastModel) {
+        const willFailover = Boolean(shouldFailover(error) && !isLastModel);
+        logGeminiAttemptError(currentModel, error, willFailover);
+        if (willFailover) {
           continue;
         }
         return { available: false, reason: classifyNetworkError(error) };
@@ -224,7 +255,9 @@ export class GeminiProvider {
         });
       } catch (error) {
         lastError = error;
-        if (shouldFailover(error) && !isLastModel) {
+        const willFailover = Boolean(shouldFailover(error) && !isLastModel);
+        logGeminiAttemptError(currentModel, error, willFailover);
+        if (willFailover) {
           continue;
         }
         return { available: false, reason: classifyNetworkError(error) };

@@ -9,7 +9,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { GeminiProvider, buildPrompt } from "../src/ai/providers/gemini-provider.js";
+import { GeminiProvider, buildPrompt, logGeminiAttemptError } from "../src/ai/providers/gemini-provider.js";
 import { NullProvider } from "../src/ai/providers/null-provider.js";
 import { createAiProvider } from "../src/ai/provider-factory.js";
 import { AiAnalysisService } from "../src/ai/ai-service.js";
@@ -743,6 +743,105 @@ test("GeminiProvider: invalid request errors retain existing behavior without cy
     assert.equal(requestedEndpoints.length, 1, "Invalid request must abort immediately without trying secondary candidate");
     assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"));
   } finally {
+    await mock.close();
+  }
+});
+
+test("logGeminiAttemptError: formats sanitized JSON diagnostic and truncates message to 160 chars", () => {
+  const originalWarn = console.warn;
+  const logged = [];
+  console.warn = (msg) => logged.push(msg);
+
+  try {
+    const fakeError = {
+      response: {
+        status: 404,
+        data: {
+          error: {
+            code: 404,
+            status: "NOT_FOUND",
+            message: "models/gemini-3.8-flash is not found for API version v1beta. Extra verbose explanation extending beyond one hundred and sixty characters to test strict truncation rules."
+          }
+        }
+      }
+    };
+
+    const diag = logGeminiAttemptError("gemini-3.8-flash", fakeError, true);
+
+    assert.equal(diag.event, "gemini_attempt_failed");
+    assert.equal(diag.model, "gemini-3.8-flash");
+    assert.equal(diag.status, 404);
+    assert.equal(diag.errorCode, "NOT_FOUND");
+    assert.ok(diag.message.length <= 160);
+    assert.equal(diag.willFailover, true);
+
+    // Verify logged string is valid JSON containing the exact fields
+    assert.equal(logged.length, 1);
+    const parsed = JSON.parse(logged[0]);
+    assert.equal(parsed.event, "gemini_attempt_failed");
+    assert.equal(parsed.model, "gemini-3.8-flash");
+    assert.equal(parsed.status, 404);
+    assert.equal(parsed.errorCode, "NOT_FOUND");
+    assert.ok(parsed.message.length <= 160);
+    assert.equal(parsed.willFailover, true);
+    // Strict schema check: only the 6 required keys
+    assert.deepEqual(Object.keys(parsed).sort(), [
+      "errorCode",
+      "event",
+      "message",
+      "model",
+      "status",
+      "willFailover"
+    ]);
+  } finally {
+    console.warn = originalWarn;
+  }
+});
+
+test("GeminiProvider: logs sanitized diagnostic to console.warn on failed attempt without leaking sensitive prompt/key data", async () => {
+  const originalWarn = console.warn;
+  const capturedLogs = [];
+  console.warn = (msg) => capturedLogs.push(msg);
+
+  const mock = await createMockServer((req, res) => {
+    res.writeHead(503, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: { code: 503, status: "UNAVAILABLE", message: "The model is overloaded." } }));
+  });
+
+  try {
+    const sensitiveKey = "AIzaSySuperSecretKey123456789";
+    const sensitiveQuestion = "CONFIDENTIAL USER QUESTION ABOUT ARBITRATION CLAUSE";
+    const sensitiveEvidence = "PROPRIETARY EVIDENCE DOCUMENT TEXT";
+
+    const provider = new GeminiProvider({
+      apiKey: sensitiveKey,
+      model: "gemini-flash-latest",
+      baseUrl: mock.url
+    });
+
+    const result = await provider.answerQuestion({
+      question: sensitiveQuestion,
+      retrievedEvidence: [{ clauseId: "c_1", text: sensitiveEvidence }]
+    });
+
+    assert.equal(result.available, false);
+    assert.equal(result.reason, "provider_server_error");
+
+    assert.ok(capturedLogs.length > 0, "Must have emitted at least one diagnostic log");
+    for (const logStr of capturedLogs) {
+      assert.ok(!logStr.includes(sensitiveKey), "Must not leak API key");
+      assert.ok(!logStr.includes(sensitiveQuestion), "Must not leak user question");
+      assert.ok(!logStr.includes(sensitiveEvidence), "Must not leak document evidence");
+
+      const parsed = JSON.parse(logStr);
+      assert.equal(parsed.event, "gemini_attempt_failed");
+      assert.equal(parsed.status, 503);
+      assert.equal(parsed.errorCode, "UNAVAILABLE");
+      assert.match(parsed.message, /overloaded/i);
+      assert.equal(typeof parsed.willFailover, "boolean");
+    }
+  } finally {
+    console.warn = originalWarn;
     await mock.close();
   }
 });
