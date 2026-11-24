@@ -9,7 +9,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import http from "node:http";
-import { GeminiProvider, buildPrompt, logGeminiAttemptError } from "../src/ai/providers/gemini-provider.js";
+import { GeminiProvider, buildPrompt, logGeminiAttemptError, FALLBACK_MODELS } from "../src/ai/providers/gemini-provider.js";
 import { NullProvider } from "../src/ai/providers/null-provider.js";
 import { createAiProvider } from "../src/ai/provider-factory.js";
 import { AiAnalysisService } from "../src/ai/ai-service.js";
@@ -509,7 +509,7 @@ test("GeminiProvider: seamlessly fails over to fallback candidate model when pri
   }
 });
 
-test("GeminiProvider: primary-model HTTP 429 triggers secondary candidate gemini-flash-lite-latest and returns available answer", async () => {
+test("GeminiProvider: primary-model HTTP 429 triggers secondary candidate gemini-3.5-flash-lite and returns available answer", async () => {
   const requestedEndpoints = [];
 
   const mock = await createMockServer((req, res) => {
@@ -561,7 +561,7 @@ test("GeminiProvider: primary-model HTTP 429 triggers secondary candidate gemini
     assert.ok(result.data.answer.includes("account page"));
     assert.equal(requestedEndpoints.length, 2, "Primary 429 must trigger secondary candidate");
     assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"), "Primary attempt must be gemini-flash-latest");
-    assert.ok(requestedEndpoints[1].includes("gemini-flash-lite-latest"), "Secondary attempt must be gemini-flash-lite-latest");
+    assert.ok(requestedEndpoints[1].includes("gemini-3.5-flash-lite"), "Secondary attempt must be gemini-3.5-flash-lite");
   } finally {
     await mock.close();
   }
@@ -618,7 +618,7 @@ test("GeminiProvider: reaches secondary candidate when earlier candidate encount
     assert.equal(result.data.grounded, true);
     assert.equal(requestedEndpoints.length, 2);
     assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"));
-    assert.ok(requestedEndpoints[1].includes("gemini-flash-lite-latest"));
+    assert.ok(requestedEndpoints[1].includes("gemini-3.5-flash-lite"));
   } finally {
     await mock.close();
   }
@@ -648,7 +648,7 @@ test("GeminiProvider: duplicate candidate names are attempted only once", async 
     assert.equal(result.available, false);
     assert.equal(requestedEndpoints.length, 2, "Must attempt primary then secondary without duplicating primary");
     assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"));
-    assert.ok(requestedEndpoints[1].includes("gemini-flash-lite-latest"));
+    assert.ok(requestedEndpoints[1].includes("gemini-3.5-flash-lite"));
     const uniqueEndpoints = new Set(requestedEndpoints);
     assert.equal(uniqueEndpoints.size, requestedEndpoints.length, "No candidate name must be attempted twice");
   } finally {
@@ -681,7 +681,7 @@ test("GeminiProvider: returns safe unavailable result when both candidates fail"
     assert.equal(result.reason, "rate_limited");
     assert.equal(requestedEndpoints.length, 2, "Must safely fail after attempting both candidates");
     assert.ok(requestedEndpoints[0].includes("gemini-flash-latest"));
-    assert.ok(requestedEndpoints[1].includes("gemini-flash-lite-latest"));
+    assert.ok(requestedEndpoints[1].includes("gemini-3.5-flash-lite"));
   } finally {
     await mock.close();
   }
@@ -844,4 +844,10 @@ test("GeminiProvider: logs sanitized diagnostic to console.warn on failed attemp
     console.warn = originalWarn;
     await mock.close();
   }
+});
+
+test("GeminiProvider: fallback models list includes exact model ID gemini-3.5-flash-lite", () => {
+  assert.ok(Array.isArray(FALLBACK_MODELS), "FALLBACK_MODELS must be an array");
+  assert.ok(FALLBACK_MODELS.includes("gemini-3.5-flash-lite"), "FALLBACK_MODELS must include exact model ID gemini-3.5-flash-lite");
+  assert.equal(FALLBACK_MODELS.includes("gemini-flash-lite-latest"), false, "Deprecated alias gemini-flash-lite-latest must not be present in fallback models");
 });

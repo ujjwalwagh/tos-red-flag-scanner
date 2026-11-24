@@ -26,9 +26,9 @@ const DEFAULT_PER_ATTEMPT_TIMEOUT_MS = 15_000;
 /** Characters of clause text sent per request to prevent token waste */
 const MAX_CLAUSE_CHARS = 1_200;
 
-const FALLBACK_MODELS = [
+export const FALLBACK_MODELS = [
   "gemini-flash-latest",
-  "gemini-flash-lite-latest"
+  "gemini-3.5-flash-lite"
 ];
 
 /**
