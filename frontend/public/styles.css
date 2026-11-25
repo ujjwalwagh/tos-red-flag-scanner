@@ -489,134 +489,7 @@ body {
   border: 1px solid var(--status-moderate-border);
 }
 
-/* Workspace Controls Bar */
-.workspace-controls-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding-top: 1rem;
-  border-top: 1px solid var(--border-subtle);
-  margin-bottom: 1.5rem;
-}
 
-/* Analysis Mode Segmented Control */
-.mode-control-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.control-label {
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-dim);
-}
-
-.mode-toggle {
-  display: inline-flex;
-  padding: 2px;
-  background-color: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
-.mode-option {
-  position: relative;
-  cursor: pointer;
-}
-
-.mode-option input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.mode-option span {
-  display: block;
-  padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  border-radius: var(--radius-sm);
-  transition: all var(--transition-fast);
-  user-select: none;
-}
-
-.mode-option input:checked + span {
-  background-color: var(--surface-raised);
-  color: var(--text-primary);
-  box-shadow: var(--shadow-sm);
-}
-
-/* Risk Priorities Disclosure */
-.preferences-wrapper {
-  flex: 1;
-  min-width: 260px;
-}
-
-.preferences-summary {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.82rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  user-select: none;
-  list-style: none;
-}
-
-.preferences-summary::-webkit-details-marker {
-  display: none;
-}
-
-.preferences-summary:hover {
-  color: var(--text-primary);
-}
-
-.summary-hint {
-  font-weight: 400;
-  color: var(--text-dim);
-  font-size: 0.78rem;
-}
-
-.preferences-grid {
-  margin-top: 1rem;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
-  padding: 1.15rem;
-  background-color: var(--bg-subtle);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-}
-
-.pref-label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  font-size: 0.78rem;
-  color: var(--text-muted);
-}
-
-.preferences-select {
-  width: 100%;
-  padding: 0.5rem 0.75rem;
-  background-color: var(--surface-base);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-family: var(--font-sans);
-  font-size: 0.82rem;
-}
-
-.preferences-col-span-2 {
-  grid-column: span 2;
-}
 
 /* Primary Action Button */
 .workspace-action-row {
@@ -924,87 +797,8 @@ body {
   font-style: italic;
 }
 
-/* Action Buttons inside Finding Cards */
-.btn-action-amendment,
-.btn-action-optout {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  padding: 0.45rem 0.85rem;
-  background-color: var(--surface-raised);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-family: var(--font-sans);
-  font-size: 0.78rem;
-  font-weight: 500;
-  cursor: pointer;
-  margin-right: 0.6rem;
-  margin-top: 0.5rem;
-  transition: all var(--transition-fast);
-}
-
-.btn-action-amendment:hover,
-.btn-action-optout:hover {
-  background-color: var(--surface-overlay);
-  color: var(--text-primary);
-  border-color: var(--border-strong);
-}
-
 .fun-row {
   display: none !important;
-}
-
-/* Advanced Tools & Export Toolbar */
-.export-toolbar {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1.25rem;
-  background-color: var(--surface-base);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  padding: 0.85rem 1.25rem;
-  margin-bottom: 2rem;
-}
-
-.tool-group {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.tool-group-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--text-dim);
-  margin-right: 0.25rem;
-}
-
-.btn-export {
-  padding: 0.4rem 0.75rem;
-  background-color: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-family: var(--font-sans);
-  font-size: 0.78rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.btn-export:hover {
-  background-color: var(--surface-overlay);
-  color: var(--text-primary);
-  border-color: var(--border-default);
-}
-
-.btn-export-rider {
-  border-color: var(--border-accent);
-  color: var(--text-primary);
 }
 
 /* Evidence-Grounded Document Q&A Section */
@@ -1849,14 +1643,9 @@ body {
     padding: 1.25rem 1rem 1.5rem;
   }
 
-  .preferences-grid,
   .form-row,
   .info-grid {
     grid-template-columns: 1fr;
-  }
-
-  .preferences-col-span-2 {
-    grid-column: span 1;
   }
 
   .timeline-node {
@@ -1868,15 +1657,6 @@ body {
     width: 28px;
     height: 28px;
     font-size: 0.75rem;
-  }
-
-  .export-toolbar {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .tool-group {
-    flex-wrap: wrap;
   }
 }
 
@@ -1907,11 +1687,6 @@ body {
   .input-tab {
     width: 100%;
     justify-content: center;
-  }
-
-  .workspace-controls-bar {
-    flex-direction: column;
-    align-items: stretch;
   }
 }
 
@@ -2649,104 +2424,5 @@ body {
   text-decoration: none;
   padding: 0.1rem 0.25rem;
   border-radius: 2px;
-}
-
-/* Statutory Compliance Audit (LexCheck) Styles */
-.compliance-source-radios {
-  display: flex;
-  gap: 0.5rem;
-  margin-top: 0.25rem;
-}
-
-.compliance-results-card {
-  background-color: var(--surface-base);
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-lg);
-  padding: 1.75rem;
-  box-shadow: var(--shadow-md);
-}
-
-.compliance-header-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-  padding-bottom: 1rem;
-  border-bottom: 1px solid var(--border-subtle);
-  margin-bottom: 1.25rem;
-}
-
-.compliance-meta-row {
-  display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-}
-
-.compliance-stat-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  background-color: var(--surface-raised);
-  padding: 0.3rem 0.75rem;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-subtle);
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.compliance-alerts-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.85rem;
-  margin-top: 1.25rem;
-}
-
-.statutory-alert-item {
-  background-color: var(--surface-raised);
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-md);
-  padding: 1rem 1.25rem;
-  transition: border-color var(--transition-fast);
-}
-
-.statutory-alert-item:hover {
-  border-color: var(--border-default);
-}
-
-.alert-top-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 0.4rem;
-}
-
-.statutory-citation {
-  font-family: var(--font-mono);
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #bfdbfe;
-  background-color: rgba(56, 116, 203, 0.15);
-  padding: 0.15rem 0.45rem;
-  border-radius: var(--radius-xs);
-}
-
-.alert-summary {
-  font-size: 0.85rem;
-  line-height: 1.55;
-  color: var(--text-secondary);
-  margin-bottom: 0.5rem;
-}
-
-.alert-guidance {
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: #cbd5e1;
-  background-color: rgba(255, 255, 255, 0.03);
-  padding: 0.6rem 0.85rem;
-  border-radius: var(--radius-xs);
-  border-left: 3px solid var(--accent-primary);
 }
 

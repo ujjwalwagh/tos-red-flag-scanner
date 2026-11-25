@@ -33,7 +33,7 @@ test("Analyze-Only UI: index.html defines Analyze navigation and view container 
   assert.match(html, /<div id="view-analyze" class="app-view">/);
 });
 
-test("Analyze-Only UI: index.html retains core Analyze tools and modals, removing obsolete modals", () => {
+test("Analyze-Only UI: index.html retains core Analyze tools and settings modal, removing simplified sections and modals", () => {
   const html = fs.readFileSync(indexPath, "utf8");
 
   // Core Analyze inputs and options
@@ -41,15 +41,30 @@ test("Analyze-Only UI: index.html retains core Analyze tools and modals, removin
   assert.ok(html.includes('id="policy-file"'), "File/PDF input must be present");
   assert.ok(html.includes('id="policy-text"'), "Textarea input must be present");
   assert.ok(html.includes('id="scan-btn"'), "Analyze submit button must be present");
+  assert.ok(html.includes('id="summary"'), "Summary section must be present");
+  assert.ok(html.includes('id="results"'), "Results section must be present");
   assert.ok(html.includes('id="qa-section"'), "Interactive Q&A section must be present");
 
-  // Retained action modals
-  assert.ok(html.includes('id="optout-modal"'), "Opt-Out modal must be retained");
-  assert.ok(html.includes('id="amendment-modal"'), "Amendment modal must be retained");
-  assert.ok(html.includes('id="rider-modal"'), "Rider modal must be retained");
+  // Retained settings modal
   assert.ok(html.includes('id="settings-modal"'), "Settings modal must be retained");
 
-  // Removed multi-vendor / drift modals
+  // Removed simplified sections and controls
+  assert.ok(!html.includes('name="scanMode"'), "Analysis Mode selector must be removed");
+  assert.ok(!html.includes('id="pref-arbitration"'), "Arbitration preference dropdown must be removed");
+  assert.ok(!html.includes('id="pref-privacy"'), "Privacy preference dropdown must be removed");
+  assert.ok(!html.includes('id="pref-subscription"'), "Subscription preference dropdown must be removed");
+  assert.ok(!html.includes('id="pref-content"'), "Content rights preference dropdown must be removed");
+  assert.ok(!html.includes('id="pref-jurisdiction"'), "Target jurisdiction dropdown must be removed");
+  assert.ok(!html.includes('id="readability"'), "Readability section must be removed");
+  assert.ok(!html.includes('id="compliance-section"'), "Compliance section must be removed");
+  assert.ok(!html.includes('id="benchmark-section"'), "Benchmark section must be removed");
+  assert.ok(!html.includes('id="checklist-section"'), "Checklist section must be removed");
+  assert.ok(!html.includes('id="export-bar"'), "Export toolbar must be removed");
+
+  // Removed modals
+  assert.ok(!html.includes('id="optout-modal"'), "Opt-Out modal must be removed");
+  assert.ok(!html.includes('id="amendment-modal"'), "Amendment modal must be removed");
+  assert.ok(!html.includes('id="rider-modal"'), "Rider modal must be removed");
   assert.ok(!html.includes('id="matrix-modal"'), "Matrix modal must be removed");
   assert.ok(!html.includes('id="drift-modal"'), "Drift modal must be removed");
 });
@@ -85,4 +100,11 @@ test("Analyze-Only Logic: app.js contains Analyze integrations and exports", () 
   assert.ok(!appJs.includes('"/api/portfolio/compare"'), "app.js must not call /api/portfolio/compare");
   assert.ok(!appJs.includes('"/api/sentinel/drift"'), "app.js must not call /api/sentinel/drift");
   assert.ok(!appJs.includes('"/api/sentinel/snapshot"'), "app.js must not call /api/sentinel/snapshot");
+  assert.ok(!appJs.includes('"/api/remediation/checklist"'), "app.js must not call /api/remediation/checklist");
+  assert.ok(!appJs.includes('"/api/remediation/opt-out"'), "app.js must not call /api/remediation/opt-out");
+  assert.ok(!appJs.includes('"/api/negotiation/amendment"'), "app.js must not call /api/negotiation/amendment");
+  assert.ok(!appJs.includes('"/api/negotiation/rider"'), "app.js must not call /api/negotiation/rider");
+  assert.ok(!appJs.includes('"/api/benchmarks/evaluate"'), "app.js must not call /api/benchmarks/evaluate");
+  assert.ok(!appJs.includes('"/api/compliance/audit"'), "app.js must not call /api/compliance/audit");
+  assert.ok(!appJs.includes('"/api/export/report"'), "app.js must not call /api/export/report");
 });

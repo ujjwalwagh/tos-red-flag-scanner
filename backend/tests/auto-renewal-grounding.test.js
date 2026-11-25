@@ -553,79 +553,19 @@ test("regression 11: Optional Autopay cannot generate a subscription-cancellatio
   assert.ok(genuineNotice.body.includes("revoke any and all ongoing authorizations"));
 });
 
-// Test 12: UI card action evaluation suppresses Propose Amendment and Draft Opt-Out Notice for Optional Autopay
-test("regression 12: UI card action evaluation suppresses Propose Amendment and Draft Opt-Out Notice for Optional Autopay", () => {
+// Test 12: UI card actions (Propose Amendment and Draft Opt-Out) are completely removed from app.js
+test("regression 12: UI card actions (Propose Amendment and Draft Opt-Out) are removed from app.js", () => {
   const appJsPath = path.resolve(__dirname, "../../frontend/public/app.js");
   const appJsCode = fs.readFileSync(appJsPath, "utf8");
 
-  // Verify the exact guard expressions exist in app.js
   assert.ok(
-    appJsCode.includes('flag.title === "Optional Recurring Payment Feature"'),
-    "app.js must check flag.title for Optional Recurring Payment Feature"
+    !appJsCode.includes("btn-action-amendment"),
+    "app.js must not contain btn-action-amendment"
   );
   assert.ok(
-    appJsCode.includes("!isOptionalPayment"),
-    "app.js must guard amendment and opt-out buttons with !isOptionalPayment"
+    !appJsCode.includes("btn-action-optout"),
+    "app.js must not contain btn-action-optout"
   );
-
-  // Test the exact decision logic used in app.js
-  function evaluateCardActions(flag) {
-    const normCategory = String(flag.clauseType || flag.category || flag.categoryId || "").toUpperCase();
-    const isOptionalPayment =
-      flag.title === "Optional Recurring Payment Feature" ||
-      /\boptional\s+recurring\s+payment\b/i.test(flag.title || "") ||
-      (normCategory.includes("RENEWAL") && /\boptional\b/i.test(flag.title || ""));
-
-    const showAmendment = !isOptionalPayment;
-    const showOptOut =
-      !isOptionalPayment &&
-      (normCategory.includes("ARBITRATION") ||
-        normCategory.includes("CLASS_ACTION") ||
-        normCategory.includes("DATA") ||
-        normCategory.includes("SHARING") ||
-        normCategory.includes("SUBSCRIPTION") ||
-        normCategory.includes("RENEWAL"));
-
-    return { showAmendment, showOptOut, isOptionalPayment };
-  }
-
-  // 1. Optional Recurring Payment finding: BOTH suppressed
-  const optActions = evaluateCardActions({
-    title: "Optional Recurring Payment Feature",
-    clauseType: "AUTO_RENEWAL",
-    severity: "LOW"
-  });
-  assert.equal(optActions.isOptionalPayment, true);
-  assert.equal(optActions.showAmendment, false, "Propose Amendment must be suppressed for Optional Autopay");
-  assert.equal(optActions.showOptOut, false, "Draft Opt-Out Notice must be suppressed for Optional Autopay");
-
-  // 2. Genuine automatic renewal: BOTH displayed
-  const renewalActions = evaluateCardActions({
-    title: "Automatic Subscription Renewal",
-    clauseType: "AUTO_RENEWAL",
-    severity: "HIGH"
-  });
-  assert.equal(renewalActions.isOptionalPayment, false);
-  assert.equal(renewalActions.showAmendment, true, "Propose Amendment must be displayed for genuine renewal");
-  assert.equal(renewalActions.showOptOut, true, "Draft Opt-Out Notice must be displayed for genuine renewal");
-
-  // 3. Mandatory arbitration: BOTH displayed
-  const arbActions = evaluateCardActions({
-    title: "Mandatory Arbitration Clause",
-    clauseType: "ARBITRATION",
-    severity: "HIGH"
-  });
-  assert.equal(arbActions.showAmendment, true);
-  assert.equal(arbActions.showOptOut, true);
-
-  // 4. Other LOW-severity clause (e.g. governing law): Amendment displayed, not suppressed globally
-  const lowGovActions = evaluateCardActions({
-    title: "Governing Law Specification",
-    clauseType: "GOVERNING_LAW",
-    severity: "LOW"
-  });
-  assert.equal(lowGovActions.showAmendment, true, "Propose Amendment must NOT be suppressed globally for other LOW findings");
-  assert.equal(lowGovActions.showOptOut, false, "Opt-out only shows for eligible opt-out categories");
 });
 
 // Test 13: Appropriate restrictive clauses still support proposed amendments

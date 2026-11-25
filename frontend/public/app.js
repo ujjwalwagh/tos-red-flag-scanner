@@ -14,7 +14,6 @@ const textLengthEl = document.querySelector("#text-length");
 const textRecoEl = document.querySelector("#text-reco");
 const statusEl = document.querySelector("#status");
 const summaryEl = document.querySelector("#summary");
-const readabilityEl = document.querySelector("#readability");
 const resultsEl = document.querySelector("#results");
 const scanBtn = document.querySelector("#scan-btn");
 const sparkCanvas = document.querySelector("#spark-layer");
@@ -274,28 +273,18 @@ form.addEventListener("submit", async (event) => {
   setLoading(true, "Reading policy and ranking risky clauses...");
   clearResults();
   clearSummary();
-  clearReadability();
 
   try {
-    const scanMode = getSelectedScanMode();
-    const userPreferences = {
-      ARBITRATION: Number(document.getElementById("pref-arbitration")?.value || 5),
-      PRIVACY_DATA_SHARING: Number(document.getElementById("pref-privacy")?.value || 5),
-      AUTO_RENEWAL: Number(document.getElementById("pref-subscription")?.value || 4),
-      USER_CONTENT_RIGHTS: Number(document.getElementById("pref-content")?.value || 4)
-    };
     let response;
     if (file) {
       const formData = new FormData();
       formData.append("policyFile", file);
-      formData.append("scanMode", scanMode);
-      formData.append("userPreferences", JSON.stringify(userPreferences));
       response = await apiFetch("/api/scan", {
         method: "POST",
         body: formData
       });
     } else {
-      const payload = url ? { url, scanMode, userPreferences } : { policyText, scanMode, userPreferences };
+      const payload = url ? { url } : { policyText };
       response = await apiFetch("/api/scan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -318,11 +307,6 @@ form.addEventListener("submit", async (event) => {
 async function renderResults(report) {
   window.currentReport = report;
   renderSummary(report);
-  renderReadability(report.readability);
-  renderComplianceSection(report);
-  renderBenchmarkSection(report);
-  renderActionChecklist(report);
-  renderExportBar(report);
   addToVendorStack(report);
   prepareQaDocumentClauses(report);
   resultsEl.classList.remove("hidden");
@@ -384,58 +368,6 @@ async function renderResults(report) {
       cardTop.after(reasonBox);
     }
 
-    // Category normalization & optional payment detection
-    const normCategory = String(flag.clauseType || flag.category || flag.categoryId || "").toUpperCase();
-    const isOptionalPayment =
-      flag.title === "Optional Recurring Payment Feature" ||
-      /\boptional\s+recurring\s+payment\b/i.test(flag.title || "") ||
-      (normCategory.includes("RENEWAL") && /\boptional\b/i.test(flag.title || ""));
-
-    // Counter-proposal amendment action (suppressed for optional payment features)
-    if (!isOptionalPayment) {
-      const amendBtn = document.createElement("button");
-      amendBtn.type = "button";
-      amendBtn.className = "btn-action-amendment";
-      amendBtn.textContent = "Propose Amendment";
-      amendBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openAmendmentModal({
-          category: normCategory || flag.categoryId || flag.category || "OTHER",
-          evidence: flag.quote || flag.evidence || "",
-          findingTitle: flag.title || "",
-          companyName: extractCompanyName(report.sourceUrl)
-        });
-      });
-      card.append(amendBtn);
-    }
-
-    // Actionable opt-out notice trigger on eligible clauses (suppressed for optional payment features)
-    if (
-      !isOptionalPayment &&
-      (normCategory.includes("ARBITRATION") ||
-        normCategory.includes("CLASS_ACTION") ||
-        normCategory.includes("DATA") ||
-        normCategory.includes("SHARING") ||
-        normCategory.includes("SUBSCRIPTION") ||
-        normCategory.includes("RENEWAL"))
-    ) {
-      const optOutBtn = document.createElement("button");
-      optOutBtn.type = "button";
-      optOutBtn.className = "btn-action-optout";
-      optOutBtn.textContent = "Draft Opt-Out Notice";
-      optOutBtn.addEventListener("click", (e) => {
-        e.stopPropagation();
-        openOptOutModal({
-          category: normCategory,
-          evidence: flag.quote || flag.evidence || "",
-          findingTitle: flag.title || "",
-          title: flag.title || "",
-          companyName: extractCompanyName(report.sourceUrl)
-        });
-      });
-      card.append(optOutBtn);
-    }
-
     card.style.transform = "none";
     wireReactionButtons(card);
     enableDrag(card);
@@ -481,8 +413,7 @@ function renderSummary(report) {
 
   const label = document.createElement("div");
   label.className = "summary-label";
-  const modeLabel = report.scanMode === "strict" ? "strict" : "broad";
-  label.textContent = `Overall risk profile: ${riskLevel.toUpperCase()} (mode: ${modeLabel})`;
+  label.textContent = `Overall risk profile: ${riskLevel.toUpperCase()}`;
 
   const meter = document.createElement("div");
   meter.className = "meter";
@@ -512,51 +443,12 @@ function renderSummary(report) {
 function clearResults() {
   resultsEl.classList.add("hidden");
   resultsEl.innerHTML = "";
-  const complianceEl = document.querySelector("#compliance-section");
-  if (complianceEl) {
-    complianceEl.classList.add("hidden");
-    complianceEl.innerHTML = "";
-  }
-  const benchmarkEl = document.querySelector("#benchmark-section");
-  if (benchmarkEl) {
-    benchmarkEl.classList.add("hidden");
-    benchmarkEl.innerHTML = "";
-  }
-  const matrixEl = document.querySelector("#matrix-section");
-  if (matrixEl) {
-    matrixEl.classList.add("hidden");
-    matrixEl.innerHTML = "";
-  }
-  const portfolioEl = document.querySelector("#portfolio-section");
-  if (portfolioEl) {
-    portfolioEl.classList.add("hidden");
-    portfolioEl.innerHTML = "";
-  }
-  const driftEl = document.querySelector("#drift-section");
-  if (driftEl) {
-    driftEl.classList.add("hidden");
-    driftEl.innerHTML = "";
-  }
-  const checklistEl = document.querySelector("#checklist-section");
-  if (checklistEl) {
-    checklistEl.classList.add("hidden");
-    checklistEl.innerHTML = "";
-  }
-  const exportBarEl = document.querySelector("#export-bar");
-  if (exportBarEl) {
-    exportBarEl.classList.add("hidden");
-  }
   resetQaSection();
 }
 
 function clearSummary() {
   summaryEl.classList.add("hidden");
   summaryEl.innerHTML = "";
-}
-
-function clearReadability() {
-  readabilityEl.classList.add("hidden");
-  readabilityEl.innerHTML = "";
 }
 
 function setLoading(loading, message) {
@@ -586,25 +478,6 @@ function escapeHtml(text) {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#39;");
-}
-
-function renderReadability(readability) {
-  if (!readability) return;
-
-  readabilityEl.classList.remove("hidden");
-  const strip = document.createElement("div");
-  strip.className = "summary-strip";
-
-  const label = document.createElement("div");
-  label.className = "summary-label";
-  label.innerHTML = `<strong>Legalese level:</strong> ${escapeHtml(readability.level)} (${readability.score}/100)`;
-
-  const warning = document.createElement("div");
-  warning.className = "summary-label";
-  warning.textContent = readability.warning || "";
-
-  strip.append(label, warning);
-  readabilityEl.append(strip);
 }
 
 function updateTextCounter() {
@@ -687,7 +560,7 @@ function setupLogoEgg() {
 
 function setupPhraseEgg() {
   const triggers = [
-    { phrase: "i accept everything", message: "Skeptic mode suggested. Switched to strict." },
+    { phrase: "i accept everything", message: "Skeptic mode suggested. Double-check every clause." },
     { phrase: "no red flags", message: "Bold claim detected. Double-check every clause." }
   ];
 
@@ -697,11 +570,6 @@ function setupPhraseEgg() {
       if (!value.includes(trigger.phrase)) continue;
       if (textInput.dataset.lastEgg === trigger.phrase) continue;
       textInput.dataset.lastEgg = trigger.phrase;
-
-      const strictRadio = document.querySelector('input[name="scanMode"][value="strict"]');
-      if (strictRadio) {
-        strictRadio.checked = true;
-      }
 
       showEggToast(trigger.message);
       const rect = textInput.getBoundingClientRect();
@@ -740,11 +608,6 @@ function showEggToast(message) {
     toast.classList.remove("is-on");
     setTimeout(() => toast.remove(), 320);
   }, 1800);
-}
-
-function getSelectedScanMode() {
-  const checked = document.querySelector('input[name="scanMode"]:checked');
-  return checked?.value === "strict" ? "strict" : "broad";
 }
 
 function delay(ms) {
@@ -1026,711 +889,9 @@ function extractCompanyName(sourceUrl, fallbackLabel = "the Service Provider", p
   }
 }
 
-async function renderActionChecklist(report) {
-  const checklistSection = document.querySelector("#checklist-section");
-  if (!checklistSection) return;
-
-  checklistSection.innerHTML = "";
-
-  // Derive findings to build checklist
-  const findings = report.flags || report.rankedFindings || [];
-  if (findings.length === 0) {
-    checklistSection.classList.add("hidden");
-    return;
-  }
-
-  try {
-    const res = await apiFetch("/api/remediation/checklist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        rankedFindings: findings,
-        companyName: extractCompanyName(report.sourceUrl)
-      })
-    });
-
-    if (!res.ok) return;
-    const data = await res.json();
-    const checklist = data.checklist;
-
-    if (!checklist || !checklist.items || checklist.items.length === 0) {
-      checklistSection.classList.add("hidden");
-      return;
-    }
-
-    checklistSection.classList.remove("hidden");
-
-    const header = document.createElement("div");
-    header.className = "checklist-title";
-    header.innerHTML = `<span>🛡️ Actionable Pre-Agreement Checklist</span> <span class="checklist-count-badge">(${checklist.summary.totalItems} recommended steps)</span>`;
-
-    const list = document.createElement("ul");
-    list.className = "checklist-list";
-
-    for (const item of checklist.items) {
-      const entry = document.createElement("li");
-      entry.className = "checklist-entry";
-
-      const cb = document.createElement("input");
-      cb.type = "checkbox";
-      cb.className = "checklist-checkbox";
-      cb.addEventListener("change", () => {
-        entry.style.opacity = cb.checked ? "0.4" : "1";
-      });
-
-      const content = document.createElement("div");
-      content.className = "checklist-content";
-
-      const topRow = document.createElement("div");
-      topRow.innerHTML = `
-        <span class="checklist-entry-title">${escapeHtml(item.title)}</span>
-        <span class="checklist-urgency-badge urgency-${String(item.urgency).toLowerCase()}">${escapeHtml(item.urgency)}</span>
-      `;
-
-      const actionText = document.createElement("div");
-      actionText.className = "checklist-entry-action";
-      actionText.textContent = item.action;
-
-      content.append(topRow, actionText);
-
-      if (item.hasRemediationLetter) {
-        const letterBtn = document.createElement("button");
-        letterBtn.type = "button";
-        letterBtn.className = "btn-action-optout";
-        letterBtn.textContent = "✉️ Draft Formal Opt-Out Notice";
-        letterBtn.addEventListener("click", () => {
-          openOptOutModal({
-            category: item.categoryId,
-            evidence: item.evidence,
-            companyName: extractCompanyName(report.sourceUrl)
-          });
-        });
-        content.append(letterBtn);
-      }
-
-      entry.append(cb, content);
-      list.append(entry);
-    }
-
-    checklistSection.append(header, list);
-  } catch (err) {
-    console.warn("Could not load checklist:", err);
-  }
-}
-
-function renderExportBar(report) {
-  const exportBar = document.querySelector("#export-bar");
-  if (!exportBar) return;
-
-  exportBar.classList.remove("hidden");
-
-  const mdBtn = document.querySelector("#btn-export-md");
-  const jsonBtn = document.querySelector("#btn-export-json");
-  const printBtn = document.querySelector("#btn-export-print");
-
-  if (mdBtn) {
-    mdBtn.addEventListener("click", async () => {
-      try {
-        const res = await apiFetch("/api/export/report", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            analysis: {
-              summary: {
-                overallRisk: report.overallRisk,
-                totalFindings: report.flags?.length || 0,
-                bySeverity: {}
-              },
-              rankedFindings: report.flags || [],
-              documentMetadata: { filename: report.sourceUrl || "policy" }
-            },
-            format: "markdown",
-            documentTitle: report.sourceUrl || "Terms of Service"
-          })
-        });
-        const data = await res.json();
-        if (data.content) {
-          downloadFile(data.content, "ClauseGuard-Audit.md", "text/markdown");
-        }
-      } catch (err) {
-        alert("Export failed: " + err.message);
-      }
-    });
-  }
-
-  if (jsonBtn) {
-    jsonBtn.addEventListener("click", async () => {
-      try {
-        const res = await apiFetch("/api/export/report", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            analysis: {
-              summary: {
-                overallRisk: report.overallRisk,
-                totalFindings: report.flags?.length || 0
-              },
-              rankedFindings: report.flags || [],
-              documentMetadata: { filename: report.sourceUrl || "policy" }
-            },
-            format: "json",
-            documentTitle: report.sourceUrl || "Terms of Service"
-          })
-        });
-        const data = await res.json();
-        if (data.content) {
-          downloadFile(JSON.stringify(data.content, null, 2), "ClauseGuard-Audit.json", "application/json");
-        }
-      } catch (err) {
-        alert("Export failed: " + err.message);
-      }
-    });
-  }
-
-  if (printBtn) {
-    printBtn.addEventListener("click", async () => {
-      try {
-        const res = await apiFetch("/api/export/report?raw=true", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            analysis: {
-              summary: {
-                overallRisk: report.overallRisk,
-                totalFindings: report.flags?.length || 0
-              },
-              rankedFindings: report.flags || [],
-              documentMetadata: { filename: report.sourceUrl || "policy" }
-            },
-            format: "html",
-            documentTitle: report.sourceUrl || "Terms of Service"
-          })
-        });
-        const html = await res.text();
-        const printWindow = window.open("", "_blank");
-        if (printWindow) {
-          printWindow.document.open();
-          printWindow.document.write(html);
-          printWindow.document.close();
-        }
-      } catch (err) {
-        alert("Print generation failed: " + err.message);
-      }
-    });
-  }
-}
-
-function downloadFile(content, filename, mimeType) {
-  const blob = new Blob([content], { type: mimeType });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
-function openOptOutModal(params = {}) {
-  activeOptOutParams = params;
-  const modal = document.querySelector("#optout-modal");
-  if (!modal) return;
-
-  const companyInput = document.querySelector("#optout-company-name");
-  if (companyInput && params.companyName) {
-    companyInput.value = params.companyName;
-  }
-
-  modal.classList.remove("hidden");
-  modal.removeAttribute("hidden");
-  regenerateOptOutLetter();
-}
-
-async function regenerateOptOutLetter() {
-  if (!activeOptOutParams) return;
-
-  const userName = document.querySelector("#optout-user-name")?.value || "";
-  const userEmail = document.querySelector("#optout-user-email")?.value || "";
-  const accountNumber = document.querySelector("#optout-account-id")?.value || "";
-  const companyName = document.querySelector("#optout-company-name")?.value || activeOptOutParams.companyName || "";
-
-  try {
-    const res = await apiFetch("/api/remediation/opt-out", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        remediationType: activeOptOutParams.category || "ARBITRATION",
-        companyName,
-        clauseEvidence: activeOptOutParams.evidence || "",
-        findingTitle: activeOptOutParams.findingTitle || activeOptOutParams.title || "",
-        userMetadata: { userName, userEmail, accountNumber }
-      })
-    });
-
-    const data = await res.json();
-    if (data.notice) {
-      const textarea = document.querySelector("#optout-letter-text");
-      const instructions = document.querySelector("#optout-instructions");
-      if (textarea) textarea.value = data.notice.body;
-      if (instructions && data.notice.deliveryInstructions) {
-        instructions.innerHTML = `<strong>Delivery Advice:</strong><ul>${data.notice.deliveryInstructions.map(i => `<li>${escapeHtml(i)}</li>`).join("")}</ul>`;
-      }
-    } else if (data.error) {
-      const textarea = document.querySelector("#optout-letter-text");
-      if (textarea) textarea.value = `Notice could not be generated: ${data.error}`;
-      const instructions = document.querySelector("#optout-instructions");
-      if (instructions) instructions.innerHTML = `<span class="text-red-400">${escapeHtml(data.error)}</span>`;
-    }
-  } catch (err) {
-    console.error("Failed to generate letter:", err);
-  }
-}
-
-function initOptOutModal() {
-  const modal = document.querySelector("#optout-modal");
-  const closeBtn = document.querySelector("#btn-close-modal");
-  const doneBtn = document.querySelector("#btn-modal-done");
-  const copyBtn = document.querySelector("#btn-copy-letter");
-  const regenerateBtn = document.querySelector("#btn-generate-letter");
-
-  const close = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    if (modal) {
-      if (modal.classList.contains("hidden") && modal.hasAttribute("hidden")) return;
-      modal.classList.add("hidden");
-      modal.setAttribute("hidden", "");
-    }
-  };
-
-  if (closeBtn) closeBtn.addEventListener("click", close);
-  if (doneBtn) doneBtn.addEventListener("click", close);
-  if (modal) {
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) close(e);
-    });
-  }
-
-  if (regenerateBtn) {
-    regenerateBtn.addEventListener("click", regenerateOptOutLetter);
-  }
-
-  if (copyBtn) {
-    copyBtn.addEventListener("click", () => {
-      const textarea = document.querySelector("#optout-letter-text");
-      if (textarea && textarea.value) {
-        navigator.clipboard.writeText(textarea.value).then(() => {
-          copyBtn.textContent = "✅ Copied!";
-          setTimeout(() => {
-            copyBtn.textContent = "📋 Copy to Clipboard";
-          }, 2000);
-        });
-      }
-    });
-  }
-}
-
-window.openOptOutModal = openOptOutModal;
-initOptOutModal();
-
 // =========================================================================
-// Phase 7: FairTerms Comparative Benchmarking & Negotiation Riders UI
+// Multi-Vendor Stack & Session History
 // =========================================================================
-
-let activeAmendmentParams = null;
-let activePosture = "BALANCED";
-let selectedRiderAmendments = [];
-
-function updateRiderCount() {
-  const countEl = document.querySelector("#rider-count");
-  if (countEl) countEl.textContent = String(selectedRiderAmendments.length);
-}
-
-async function renderBenchmarkSection(report) {
-  const benchmarkEl = document.querySelector("#benchmark-section");
-  if (!benchmarkEl) return;
-
-  benchmarkEl.innerHTML = "";
-  let benchmarks = report.benchmarks;
-
-  // If benchmarks were not pre-calculated in pipeline, evaluate on demand
-  if (!benchmarks) {
-    try {
-      const res = await apiFetch("/api/benchmarks/evaluate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          findings: report.flags || report.rankedFindings || [],
-          sector: "GENERAL"
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        benchmarks = data.benchmarks;
-      }
-    } catch (err) {
-      console.warn("Could not evaluate benchmarks:", err);
-    }
-  }
-
-  if (!benchmarks) {
-    benchmarkEl.classList.add("hidden");
-    return;
-  }
-
-  benchmarkEl.classList.remove("hidden");
-
-  const standingClass = `standing-${String(benchmarks.relativeStanding || "standard").toLowerCase()}`;
-  const standingBadge = benchmarks.relativeStanding ? benchmarks.relativeStanding.replace("_", " ") : "Standard";
-
-  const container = document.createElement("div");
-  container.className = "benchmark-container";
-
-  container.innerHTML = `
-    <div class="benchmark-banner">
-      <div class="benchmark-score-col">
-        <div class="benchmark-circle-metric">
-          <span class="benchmark-circle-score">${benchmarks.restrictivenessScore || 0}</span>
-          <span class="benchmark-circle-label">Index / 100</span>
-        </div>
-        <div>
-          <div class="flex items-center gap-2">
-            <h3 class="text-sm font-bold text-white">Comparative Vendor Restrictiveness</h3>
-            <span class="benchmark-standing-badge ${standingClass}">${escapeHtml(standingBadge)}</span>
-          </div>
-          <p class="text-xs text-neutral-300 mt-1">${escapeHtml(benchmarks.comparisonStatement || "")}</p>
-          <span class="text-[11px] text-neutral-400">Benchmarked against empirical <strong>${escapeHtml(benchmarks.sectorDisplayName || benchmarks.sector || "Industry Baseline")}</strong> corpus.</span>
-        </div>
-      </div>
-    </div>
-
-    ${benchmarks.domainBreakdown
-      ? `
-      <div class="benchmark-domains-grid">
-        <div class="benchmark-domain-card">
-          <div class="benchmark-domain-title">Dispute Resolution</div>
-          <div class="benchmark-domain-status">${escapeHtml(benchmarks.domainBreakdown.disputeResolution?.status || "Standard")}</div>
-          <div class="benchmark-domain-rate">${escapeHtml(benchmarks.domainBreakdown.disputeResolution?.industryPrevalence || "")}</div>
-        </div>
-        <div class="benchmark-domain-card">
-          <div class="benchmark-domain-title">Content & IP Rights</div>
-          <div class="benchmark-domain-status">${escapeHtml(benchmarks.domainBreakdown.contentRights?.status || "Standard")}</div>
-          <div class="benchmark-domain-rate">${escapeHtml(benchmarks.domainBreakdown.contentRights?.industryPrevalence || "")}</div>
-        </div>
-        <div class="benchmark-domain-card">
-          <div class="benchmark-domain-title">Data Privacy & Sharing</div>
-          <div class="benchmark-domain-status">${escapeHtml(benchmarks.domainBreakdown.dataPrivacy?.status || "Standard")}</div>
-          <div class="benchmark-domain-rate">${escapeHtml(benchmarks.domainBreakdown.dataPrivacy?.industryPrevalence || "")}</div>
-        </div>
-        <div class="benchmark-domain-card">
-          <div class="benchmark-domain-title">Billing & Renewals</div>
-          <div class="benchmark-domain-status">${escapeHtml(benchmarks.domainBreakdown.billingPractices?.status || "Standard")}</div>
-          <div class="benchmark-domain-rate">${escapeHtml(benchmarks.domainBreakdown.billingPractices?.industryPrevalence || "")}</div>
-        </div>
-      </div>
-    `
-      : ""
-    }
-
-    ${Array.isArray(benchmarks.outliers) && benchmarks.outliers.length > 0
-      ? `
-      <div class="benchmark-outliers-box">
-        <h4 class="text-xs font-bold text-red-400 mb-1">⚠️ Outlier Restrictiveness Warnings:</h4>
-        <ul class="text-xs text-red-200 list-disc pl-4 space-y-0.5">
-          ${benchmarks.outliers.map(o => `<li>${escapeHtml(o)}</li>`).join("")}
-        </ul>
-      </div>
-    `
-      : ""
-    }
-  `;
-
-  benchmarkEl.append(container);
-}
-
-function openAmendmentModal(params = {}) {
-  activeAmendmentParams = params;
-  activePosture = "BALANCED";
-
-  const modal = document.querySelector("#amendment-modal");
-  if (!modal) return;
-
-  // Reset posture buttons
-  document.querySelectorAll(".btn-posture").forEach((btn) => {
-    btn.classList.toggle("active", btn.dataset.posture === "BALANCED");
-  });
-
-  const subtitle = document.querySelector("#amendment-subtitle");
-  if (subtitle && params.category) {
-    subtitle.textContent = `Balanced counter-proposal for ${params.category.replace(/_/g, " ")}`;
-  }
-
-  modal.classList.remove("hidden");
-  modal.removeAttribute("hidden");
-  fetchAndRenderAmendment();
-}
-
-async function fetchAndRenderAmendment() {
-  if (!activeAmendmentParams) return;
-
-  const diffEl = document.querySelector("#redline-diff-content");
-  const statsEl = document.querySelector("#diff-stats");
-  const proposedTextarea = document.querySelector("#proposed-clause-text");
-  const pointsList = document.querySelector("#talking-points-list");
-  const fallbackText = document.querySelector("#fallback-text");
-  const addBtn = document.querySelector("#btn-add-to-rider");
-
-  if (diffEl) diffEl.innerHTML = `<span class="text-neutral-400">Generating balanced counter-proposal and redline diff...</span>`;
-
-  try {
-    const res = await apiFetch("/api/negotiation/amendment", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        categoryId: activeAmendmentParams.category || "OTHER",
-        clauseText: activeAmendmentParams.evidence || "",
-        posture: activePosture,
-        companyName: activeAmendmentParams.companyName || "Service Provider"
-      })
-    });
-
-    if (!res.ok) throw new Error("Failed to generate amendment proposal.");
-    const data = await res.json();
-    const amendment = data.amendment;
-
-    activeAmendmentParams.currentAmendment = amendment;
-
-    if (diffEl) {
-      diffEl.innerHTML = amendment.redline?.htmlDiff || escapeHtml(amendment.proposedAmendment);
-    }
-
-    if (statsEl && amendment.redline?.stats) {
-      const s = amendment.redline.stats;
-      statsEl.textContent = `+${s.wordsAdded} added / -${s.wordsRemoved} deleted (${s.wordsUnchanged} kept)`;
-    }
-
-    if (proposedTextarea) {
-      proposedTextarea.value = amendment.proposedAmendment || "";
-    }
-
-    if (pointsList) {
-      pointsList.innerHTML = (amendment.talkingPoints || [])
-        .map((p) => `<li>${escapeHtml(p)}</li>`)
-        .join("");
-    }
-
-    if (fallbackText) {
-      fallbackText.textContent = amendment.fallbackAlternative || "Standard good-faith mutual escalation.";
-    }
-
-    if (addBtn) {
-      const alreadyAdded = selectedRiderAmendments.some(a => a.categoryId === amendment.categoryId);
-      addBtn.textContent = alreadyAdded ? "✅ Added to Rider" : "➕ Add to Contract Rider";
-      addBtn.disabled = alreadyAdded;
-    }
-  } catch (err) {
-    if (diffEl) diffEl.innerHTML = `<span class="text-red-400">Error: ${escapeHtml(err.message)}</span>`;
-  }
-}
-
-function initAmendmentModal() {
-  const modal = document.querySelector("#amendment-modal");
-  const closeBtn = document.querySelector("#btn-close-amendment");
-  const doneBtn = document.querySelector("#btn-amendment-done");
-  const copyBtn = document.querySelector("#btn-copy-amendment-text");
-  const addBtn = document.querySelector("#btn-add-to-rider");
-
-  const close = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    if (modal) {
-      if (modal.classList.contains("hidden") && modal.hasAttribute("hidden")) return;
-      modal.classList.add("hidden");
-      modal.setAttribute("hidden", "");
-    }
-  };
-
-  if (closeBtn) closeBtn.addEventListener("click", close);
-  if (doneBtn) doneBtn.addEventListener("click", close);
-  if (modal) {
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) close(e);
-    });
-  }
-
-  // Posture selector buttons
-  document.querySelectorAll(".btn-posture").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".btn-posture").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      activePosture = btn.dataset.posture || "BALANCED";
-      fetchAndRenderAmendment();
-    });
-  });
-
-  if (copyBtn) {
-    copyBtn.addEventListener("click", () => {
-      const textarea = document.querySelector("#proposed-clause-text");
-      if (textarea && textarea.value) {
-        navigator.clipboard.writeText(textarea.value).then(() => {
-          copyBtn.textContent = "✅ Copied!";
-          setTimeout(() => {
-            copyBtn.textContent = "📋 Copy Clause";
-          }, 2000);
-        });
-      }
-    });
-  }
-
-  if (addBtn) {
-    addBtn.addEventListener("click", () => {
-      if (activeAmendmentParams?.currentAmendment) {
-        const item = activeAmendmentParams.currentAmendment;
-        const exists = selectedRiderAmendments.some(a => a.categoryId === item.categoryId);
-        if (!exists) {
-          selectedRiderAmendments.push(item);
-          updateRiderCount();
-          addBtn.textContent = "✅ Added to Rider";
-          addBtn.disabled = true;
-        }
-      }
-    });
-  }
-}
-
-async function openRiderModal() {
-  const modal = document.querySelector("#rider-modal");
-  if (!modal) return;
-
-  if (selectedRiderAmendments.length === 0) {
-    alert("No amendments added yet. Click '⚖️ Propose Fair Amendment' on any clause to add clauses to your rider.");
-    return;
-  }
-
-  modal.classList.remove("hidden");
-  modal.removeAttribute("hidden");
-  await compileAndRenderRider();
-}
-
-async function compileAndRenderRider() {
-  const vendorInput = document.querySelector("#rider-vendor-name");
-  const userInput = document.querySelector("#rider-user-name");
-  const titleInput = document.querySelector("#rider-agreement-title");
-  const dateInput = document.querySelector("#rider-effective-date");
-  const textarea = document.querySelector("#rider-markdown-text");
-  const countSpan = document.querySelector("#rider-clause-count");
-
-  if (!dateInput.value) {
-    dateInput.value = new Date().toISOString().split("T")[0];
-  }
-
-  const companyName = vendorInput?.value || "Service Provider";
-  const counterpartyName = userInput?.value || "User";
-  const agreementTitle = titleInput?.value || "Terms of Service";
-  const effectiveDate = dateInput?.value || "";
-
-  if (textarea) textarea.value = "Compiling unified Contract Amendment Rider...";
-
-  try {
-    const res = await apiFetch("/api/negotiation/rider", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        amendments: selectedRiderAmendments,
-        companyName,
-        counterpartyName,
-        agreementTitle,
-        effectiveDate
-      })
-    });
-
-    if (!res.ok) throw new Error("Failed to compile contract rider.");
-    const data = await res.json();
-    const rider = data.rider;
-
-    if (textarea) textarea.value = rider.markdown || "";
-    if (countSpan) countSpan.textContent = `${rider.clauseCount} clause ${rider.clauseCount === 1 ? "amendment" : "amendments"} included`;
-  } catch (err) {
-    if (textarea) textarea.value = `Error compiling rider: ${err.message}`;
-  }
-}
-
-function initRiderModal() {
-  const modal = document.querySelector("#rider-modal");
-  const closeBtn = document.querySelector("#btn-close-rider");
-  const doneBtn = document.querySelector("#btn-rider-done");
-  const exportRiderBtn = document.querySelector("#btn-export-rider");
-  const copyBtn = document.querySelector("#btn-copy-rider");
-  const downloadBtn = document.querySelector("#btn-download-rider");
-
-  const close = (e) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-    if (modal) {
-      if (modal.classList.contains("hidden") && modal.hasAttribute("hidden")) return;
-      modal.classList.add("hidden");
-      modal.setAttribute("hidden", "");
-    }
-  };
-
-  if (closeBtn) closeBtn.addEventListener("click", close);
-  if (doneBtn) doneBtn.addEventListener("click", close);
-  if (modal) {
-    modal.addEventListener("click", (e) => {
-      if (e.target === modal) close(e);
-    });
-  }
-
-  if (exportRiderBtn) {
-    exportRiderBtn.addEventListener("click", openRiderModal);
-  }
-
-  // Auto-recompile rider when metadata changes
-  const vendorInput = document.querySelector("#rider-vendor-name");
-  const userInput = document.querySelector("#rider-user-name");
-  const titleInput = document.querySelector("#rider-agreement-title");
-  const dateInput = document.querySelector("#rider-effective-date");
-
-  [vendorInput, userInput, titleInput, dateInput].forEach((inp) => {
-    if (inp) inp.addEventListener("change", compileAndRenderRider);
-  });
-
-  if (copyBtn) {
-    copyBtn.addEventListener("click", () => {
-      const textarea = document.querySelector("#rider-markdown-text");
-      if (textarea && textarea.value) {
-        navigator.clipboard.writeText(textarea.value).then(() => {
-          copyBtn.textContent = "✅ Copied!";
-          setTimeout(() => {
-            copyBtn.textContent = "📋 Copy Markdown";
-          }, 2000);
-        });
-      }
-    });
-  }
-
-  if (downloadBtn) {
-    downloadBtn.addEventListener("click", () => {
-      const textarea = document.querySelector("#rider-markdown-text");
-      if (textarea && textarea.value) {
-        downloadFile(textarea.value, "Contract-Amendment-Rider.md", "text/markdown");
-      }
-    });
-  }
-}
-
-window.openAmendmentModal = openAmendmentModal;
-window.openRiderModal = openRiderModal;
-
-initAmendmentModal();
-initRiderModal();
 
 // =========================================================================
 // Phase 8: Multi-Vendor Matrix, Portfolio Risk & Statutory LexCheck UI
@@ -1780,126 +941,6 @@ function addToVendorStack(report) {
   });
   if (sessionVendorStack.length > 10) sessionVendorStack.shift();
 }
-
-async function renderComplianceSection(report) {
-  const compEl = document.querySelector("#compliance-section");
-  if (!compEl) return;
-
-  compEl.innerHTML = "";
-  let compliance = report.compliance;
-
-  const targetJurisdiction = document.querySelector("#pref-jurisdiction")?.value || "US_FEDERAL";
-
-  // If compliance was not pre-calculated or needs update for selected jurisdiction
-  if (!compliance || compliance.jurisdiction !== targetJurisdiction) {
-    try {
-      const res = await apiFetch("/api/compliance/audit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          findings: report.flags || report.rankedFindings || [],
-          jurisdiction: targetJurisdiction,
-          sourceUrl: report.sourceUrl || "",
-          policyText: report.policyText || report.text || (typeof window !== "undefined" && window.lastPastedPolicyText) || ""
-        })
-      });
-      if (res.ok) {
-        const data = await res.json();
-        compliance = data.compliance;
-      }
-    } catch (err) {
-      console.warn("Could not audit compliance:", err);
-    }
-  }
-
-  if (!compliance || !compliance.statutoryAlerts || compliance.statutoryAlerts.length === 0) {
-    compEl.classList.add("hidden");
-    return;
-  }
-
-  compEl.classList.remove("hidden");
-
-  const banner = document.createElement("div");
-  banner.className = "compliance-banner";
-
-  banner.innerHTML = `
-    <div class="flex justify-between items-center flex-wrap gap-2 mb-2">
-      <div>
-        <h3 class="text-sm font-bold text-purple-200">⚖️ Jurisdictional Compliance Audit ("LexCheck")</h3>
-        <span class="text-xs text-purple-300/80">Evaluated against <strong>${escapeHtml(compliance.jurisdictionDisplayName || compliance.jurisdiction)}</strong></span>
-      </div>
-      <span class="badge badge-statutory">${escapeHtml(compliance.complianceStanding.replace(/_/g, " "))}</span>
-    </div>
-    ${compliance.applicabilityNotice
-      ? `<div class="p-2 mb-2 text-xs bg-purple-950/60 border border-purple-500/30 rounded text-purple-200">ℹ️ ${escapeHtml(compliance.applicabilityNotice)}</div>`
-      : ""
-    }
-    <p class="text-xs text-purple-200/90 mb-2">
-      Found ${compliance.totalStatutoryAlerts} statutory points of note, including ${compliance.unenforceableClausesCount} clauses with potential consumer enforceability limitations.
-    </p>
-    <div class="compliance-alerts-grid">
-      ${compliance.statutoryAlerts.map(a => {
-      let badgeColor = "text-purple-300";
-      let badgeLabel = a.enforceabilityStatus ? a.enforceabilityStatus.replace(/_/g, " ") : "Statutory Requirement";
-      if (a.alertClassification === "UNENFORCEABLE_CLAUSE") {
-        badgeColor = "text-amber-300";
-        badgeLabel = "⚠️ Unenforceable Risk";
-      } else if (a.alertClassification === "STATUTORY_VIOLATION") {
-        badgeColor = "text-red-300";
-        badgeLabel = "🛑 Statutory Violation";
-      } else if (a.alertClassification === "STATUTORY_REQUIREMENT") {
-        badgeColor = "text-purple-300";
-        badgeLabel = "📋 Statutory Standard";
-      }
-      return `
-        <div class="compliance-alert-card">
-          <div class="flex justify-between items-center text-xs font-bold text-purple-300 mb-1">
-            <span>${escapeHtml(a.categoryDisplayName)}</span>
-            <span class="text-[10px] ${badgeColor} font-mono">${escapeHtml(badgeLabel)}</span>
-          </div>
-          <div class="text-xs text-neutral-300 font-semibold">${escapeHtml(a.statutoryCitation)}</div>
-          <div class="text-[11px] text-neutral-400 mt-1">${escapeHtml(a.summary)}</div>
-          <div class="text-[10px] text-purple-300/90 mt-1 italic">Guidance: ${escapeHtml(a.guidance)}</div>
-        </div>
-      `;
-    }).join("")}
-    </div>
-    ${compliance.regulatoryNotice
-      ? `<div class="text-[10px] text-purple-300/70 mt-2 italic">${escapeHtml(compliance.regulatoryNotice)}</div>`
-      : ""
-    }
-  `;
-
-  compEl.append(banner);
-}
-
-// Clause action modals delegation (amendment and opt-out)
-function initClauseActionModals() {
-  document.addEventListener("click", (e) => {
-    const amendBtn = e.target.closest('[data-action="amendment"]');
-    if (amendBtn) {
-      e.preventDefault();
-      openAmendmentModal({
-        category: amendBtn.dataset.category || "",
-        evidence: amendBtn.dataset.evidence || ""
-      });
-      return;
-    }
-
-    const optOutBtn = e.target.closest('[data-action="optout"]');
-    if (optOutBtn) {
-      e.preventDefault();
-      openOptOutModal({
-        category: optOutBtn.dataset.category || ""
-      });
-      return;
-    }
-  });
-}
-if (typeof window !== "undefined") {
-}
-
-initClauseActionModals();
 
 // Phase 9.4.4 Interactive Evidence-Grounded Q&A Module
 function prepareQaDocumentClauses(report) {
