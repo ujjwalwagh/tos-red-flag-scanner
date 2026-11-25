@@ -4,8 +4,6 @@ import analyzeRoutes from "./analyze.routes.js";
 import scanRoutes from "./scan.routes.js";
 import { remediationRouter } from "./remediation.routes.js";
 import { negotiationRouter } from "./negotiation.routes.js";
-import { portfolioRouter } from "./portfolio.routes.js";
-import { sentinelRouter } from "./sentinel.routes.js";
 import { complianceRouter } from "./compliance.routes.js";
 import { upload } from "./upload.middleware.js";
 import { ingestDocumentController } from "../controllers/ingest.controller.js";
@@ -17,8 +15,6 @@ apiRouter.use("/analyze", analyzeRoutes);
 apiRouter.use("/scan", scanRoutes);
 apiRouter.use("/", remediationRouter);
 apiRouter.use("/", negotiationRouter);
-apiRouter.use("/", portfolioRouter);
-apiRouter.use("/", sentinelRouter);
 apiRouter.use("/", complianceRouter);
 
 // Compatibility alias for /api/pdf/ingest

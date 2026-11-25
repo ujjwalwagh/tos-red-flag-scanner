@@ -148,8 +148,8 @@ test("resolveRateLimitTier: correctly classifies document ingestion endpoints", 
 test("resolveRateLimitTier: correctly classifies general API endpoints", () => {
   assert.equal(resolveRateLimitTier({ originalUrl: "/api/remediation/categories", method: "GET" }), "general");
   assert.equal(resolveRateLimitTier({ originalUrl: "/api/negotiation/generate", method: "POST" }), "general");
-  assert.equal(resolveRateLimitTier({ originalUrl: "/api/sentinel/status", method: "GET" }), "general");
-  assert.equal(resolveRateLimitTier({ originalUrl: "/api/portfolio/summary", method: "GET" }), "general");
+  assert.equal(resolveRateLimitTier({ originalUrl: "/api/compliance/audit", method: "POST" }), "general");
+  assert.equal(resolveRateLimitTier({ originalUrl: "/api/compliance/jurisdictions", method: "GET" }), "general");
 });
 
 /* ------------------------------------------------------------------

@@ -10,105 +10,79 @@ const indexPath = path.resolve(__dirname, "../../frontend/public/index.html");
 const stylesPath = path.resolve(__dirname, "../../frontend/public/styles.css");
 const appJsPath = path.resolve(__dirname, "../../frontend/public/app.js");
 
-test("Phase 9.3 UI: index.html defines topbar SaaS navigation tabs and app-views", () => {
+test("Analyze-Only UI: index.html defines Analyze navigation and view container only", () => {
   const html = fs.readFileSync(indexPath, "utf8");
 
-  // Topbar navigation tabs
+  // Analyze navigation tab must be present
   assert.ok(html.includes('id="nav-tab-analyze"'), "Must define Analyze navigation tab");
-  assert.ok(html.includes('id="nav-tab-portfolio"'), "Must define Portfolio navigation tab");
-  assert.ok(html.includes('id="nav-tab-sentinel"'), "Must define Sentinel navigation tab");
-  assert.ok(html.includes('id="nav-tab-compliance"'), "Must define Compliance navigation tab");
 
-  // Dedicated view containers
+  // Removed views navigation tabs must NOT be present
+  assert.ok(!html.includes('id="nav-tab-portfolio"'), "Must NOT define Portfolio navigation tab");
+  assert.ok(!html.includes('id="nav-tab-sentinel"'), "Must NOT define Sentinel navigation tab");
+  assert.ok(!html.includes('id="nav-tab-compliance"'), "Must NOT define Compliance navigation tab");
+
+  // Dedicated view container for Analyze must be present
   assert.ok(html.includes('id="view-analyze"'), "Must define view-analyze container");
-  assert.ok(html.includes('id="view-portfolio"'), "Must define view-portfolio container");
-  assert.ok(html.includes('id="view-sentinel"'), "Must define view-sentinel container");
-  assert.ok(html.includes('id="view-compliance"'), "Must define view-compliance container");
 
-  // Initial state: view-analyze active, others hidden
+  // Removed view containers must NOT be present
+  assert.ok(!html.includes('id="view-portfolio"'), "Must NOT define view-portfolio container");
+  assert.ok(!html.includes('id="view-sentinel"'), "Must NOT define view-sentinel container");
+  assert.ok(!html.includes('id="view-compliance"'), "Must NOT define view-compliance container");
+
+  // State: view-analyze is active
   assert.match(html, /<div id="view-analyze" class="app-view">/);
-  assert.match(html, /<section id="view-portfolio" class="app-view hidden"/);
-  assert.match(html, /<section id="view-sentinel" class="app-view hidden"/);
-  assert.match(html, /<section id="view-compliance" class="app-view hidden"/);
 });
 
-test("Phase 9.3 UI: index.html has complete label associations and accessible controls", () => {
+test("Analyze-Only UI: index.html retains core Analyze tools and modals, removing obsolete modals", () => {
   const html = fs.readFileSync(indexPath, "utf8");
 
-  // Portfolio view inputs
-  assert.ok(html.includes('for="portfolio-vendor-name-input"'));
-  assert.ok(html.includes('id="portfolio-vendor-name-input"'));
-  assert.ok(html.includes('for="portfolio-vendor-text-input"'));
-  assert.ok(html.includes('id="portfolio-vendor-text-input"'));
+  // Core Analyze inputs and options
+  assert.ok(html.includes('id="policy-url"'), "URL input must be present");
+  assert.ok(html.includes('id="policy-file"'), "File/PDF input must be present");
+  assert.ok(html.includes('id="policy-text"'), "Textarea input must be present");
+  assert.ok(html.includes('id="scan-btn"'), "Analyze submit button must be present");
+  assert.ok(html.includes('id="qa-section"'), "Interactive Q&A section must be present");
 
-  // Sentinel view inputs
-  assert.ok(html.includes('for="sentinel-vendor-input"'));
-  assert.ok(html.includes('id="sentinel-vendor-input"'));
-  assert.ok(html.includes('for="sentinel-snapshot-select"'));
-  assert.ok(html.includes('id="sentinel-snapshot-select"'));
-  assert.ok(html.includes('for="sentinel-base-text"'));
-  assert.ok(html.includes('id="sentinel-base-text"'));
-  assert.ok(html.includes('for="sentinel-current-text"'));
-  assert.ok(html.includes('id="sentinel-current-text"'));
+  // Retained action modals
+  assert.ok(html.includes('id="optout-modal"'), "Opt-Out modal must be retained");
+  assert.ok(html.includes('id="amendment-modal"'), "Amendment modal must be retained");
+  assert.ok(html.includes('id="rider-modal"'), "Rider modal must be retained");
+  assert.ok(html.includes('id="settings-modal"'), "Settings modal must be retained");
 
-  // Compliance view inputs
-  assert.ok(html.includes('for="compliance-jurisdiction-select"'));
-  assert.ok(html.includes('id="compliance-jurisdiction-select"'));
-  assert.ok(html.includes('for="compliance-custom-textarea"'));
-  assert.ok(html.includes('id="compliance-custom-textarea"'));
+  // Removed multi-vendor / drift modals
+  assert.ok(!html.includes('id="matrix-modal"'), "Matrix modal must be removed");
+  assert.ok(!html.includes('id="drift-modal"'), "Drift modal must be removed");
 });
 
-test("Phase 9.3 CSP Compliance: No inline style attributes or inline event handlers in views", () => {
+test("Analyze-Only CSP Compliance: No inline style attributes or inline event handlers", () => {
   const html = fs.readFileSync(indexPath, "utf8");
 
-  // Extract content of the new views
-  const portfolioMatch = html.match(/<section id="view-portfolio"[\s\S]*?<\/section>/);
-  assert.ok(portfolioMatch, "view-portfolio section must be present");
-  assert.ok(!portfolioMatch[0].includes('style="'), "view-portfolio must not contain inline style attributes");
-  assert.ok(!portfolioMatch[0].includes("onclick="), "view-portfolio must not contain onclick handlers");
-  assert.ok(!portfolioMatch[0].includes("onsubmit="), "view-portfolio must not contain onsubmit handlers");
-
-  const sentinelMatch = html.match(/<section id="view-sentinel"[\s\S]*?<\/section>/);
-  assert.ok(sentinelMatch, "view-sentinel section must be present");
-  assert.ok(!sentinelMatch[0].includes('style="'), "view-sentinel must not contain inline style attributes");
-  assert.ok(!sentinelMatch[0].includes("onclick="), "view-sentinel must not contain onclick handlers");
-
-  const complianceMatch = html.match(/<section id="view-compliance"[\s\S]*?<\/section>/);
-  assert.ok(complianceMatch, "view-compliance section must be present");
-  assert.ok(!complianceMatch[0].includes('style="'), "view-compliance must not contain inline style attributes");
-  assert.ok(!complianceMatch[0].includes("onclick="), "view-compliance must not contain onclick handlers");
+  const analyzeMatch = html.match(/<div id="view-analyze"[\s\S]*?<!-- End View 1: Document Analysis -->/);
+  assert.ok(analyzeMatch, "view-analyze section must be present");
+  assert.ok(!analyzeMatch[0].includes('style="'), "view-analyze must not contain inline style attributes");
+  assert.ok(!analyzeMatch[0].includes("onclick="), "view-analyze must not contain onclick handlers");
+  assert.ok(!analyzeMatch[0].includes("onsubmit="), "view-analyze must not contain onsubmit handlers");
 });
 
-test("Phase 9.3 Styles: styles.css contains required SaaS UI classes", () => {
+test("Analyze-Only Styles: styles.css contains required navigation and view styles", () => {
   const css = fs.readFileSync(stylesPath, "utf8");
 
   assert.ok(css.includes(".nav-tabs-group"), "styles.css must define .nav-tabs-group");
   assert.ok(css.includes(".nav-tab"), "styles.css must define .nav-tab");
   assert.ok(css.includes(".app-view"), "styles.css must define .app-view");
-  assert.ok(css.includes(".vendor-stack-card"), "styles.css must define .vendor-stack-card");
-  assert.ok(css.includes(".portfolio-banner-card"), "styles.css must define .portfolio-banner-card");
-  assert.ok(css.includes(".procurement-rec-banner"), "styles.css must define .procurement-rec-banner");
-  assert.ok(css.includes(".drift-results-card"), "styles.css must define .drift-results-card");
-  assert.ok(css.includes(".compliance-results-card"), "styles.css must define .compliance-results-card");
-  assert.ok(css.includes(".statutory-alert-item"), "styles.css must define .statutory-alert-item");
 });
 
-test("Phase 9.3 Logic: app.js contains API integrations for Portfolio, Sentinel, and Compliance", () => {
+test("Analyze-Only Logic: app.js contains Analyze integrations and exports", () => {
   const appJs = fs.readFileSync(appJsPath, "utf8");
 
-  // Portfolio API integrations
-  assert.ok(appJs.includes('"/api/portfolio/evaluate"'), "app.js must call /api/portfolio/evaluate");
-  assert.ok(appJs.includes('"/api/portfolio/compare"'), "app.js must call /api/portfolio/compare");
-
-  // Sentinel API integrations
-  assert.ok(appJs.includes("/api/sentinel/drift"), "app.js must call /api/sentinel/drift");
-  assert.ok(appJs.includes("/api/sentinel/snapshot"), "app.js must call /api/sentinel/snapshot");
-  assert.ok(appJs.includes("/api/sentinel/snapshots/"), "app.js must call /api/sentinel/snapshots/:vendorName");
-
-  // Compliance API integrations
-  assert.ok(appJs.includes('"/api/compliance/audit"'), "app.js must call /api/compliance/audit");
-  assert.ok(appJs.includes('"/api/compliance/jurisdictions"'), "app.js must call /api/compliance/jurisdictions");
-
-  // Export check
+  // Verification of Analyze-only view setup
   assert.ok(appJs.includes("initSaaSViews"), "app.js must define and export initSaaSViews");
+  assert.ok(appJs.includes("extractCompanyName"), "app.js must export extractCompanyName");
+  assert.ok(appJs.includes("renderQaResult"), "app.js must export renderQaResult");
+
+  // Obsolete view API integrations should not be active
+  assert.ok(!appJs.includes('"/api/portfolio/evaluate"'), "app.js must not call /api/portfolio/evaluate");
+  assert.ok(!appJs.includes('"/api/portfolio/compare"'), "app.js must not call /api/portfolio/compare");
+  assert.ok(!appJs.includes('"/api/sentinel/drift"'), "app.js must not call /api/sentinel/drift");
+  assert.ok(!appJs.includes('"/api/sentinel/snapshot"'), "app.js must not call /api/sentinel/snapshot");
 });
