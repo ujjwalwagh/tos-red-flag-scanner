@@ -1,11 +1,10 @@
 import crypto from "node:crypto";
 import { AppError, validatePolicyUrl } from "../../security/security.js";
 import { fetchPolicyText, MAX_POLICY_TEXT_LENGTH } from "../../ingestion/url/fetch-policy-text.js";
-import { extractPdfTextFromBuffer } from "../../ingestion/pdf/pdf-text.js";
+import { extractPdfTextFromBuffer } from "../../ingestion/pdf/document-processor.js";
 import { computeReadability } from "../../analysis/semantic/readability.js";
 import { scanPolicyForRedFlags } from "../../analysis/semantic/scan-policy.js";
-import { segmentDocumentPages } from "../../processing/segmentation/clause-segmenter.js";
-import { normalizeText } from "../../processing/normalization/text-normalizer.js";
+import { ingestRawText } from "../../ingestion/text/text-ingest.js";
 import { logAudit, estimateInputLength } from "../../utils/logger.js";
 
 export async function scanPolicyController(req, res) {
@@ -66,11 +65,7 @@ export async function scanPolicyController(req, res) {
     const readability = computeReadability(policyText);
     const segments = (Array.isArray(report.segments) && report.segments.length > 0)
       ? report.segments
-      : segmentDocumentPages([{
-          pageNumber: 1,
-          rawText: policyText,
-          normalizedText: normalizeText(policyText)
-        }]);
+      : ingestRawText(policyText, { filename: sourceLabel }).segments;
 
     return res.json({
       ...report,

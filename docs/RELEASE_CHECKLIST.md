@@ -11,7 +11,7 @@
 All automated tests must pass with 100% success (zero failures, zero skips) before any release build or package distribution:
 
 > [!NOTE]
-> The table below captures the historical Stage A (Phase 7G-E) verification baseline (449 Node.js + 61 Python tests). For the current production release verification as of Phase 9.5, refer to [docs/phases/phase-9.5-release-readiness-audit.md](docs/phases/phase-9.5-release-readiness-audit.md), which certifies the final baseline of **690 automated tests** (617 Node.js backend tests across 40 suites + 73 Python AI service tests across 5 files) with a 100% pass rate.
+> The table below captures the historical verification baseline. For the current production release verification, refer to [archive/phases/phase-9.5-release-readiness-audit.md](archive/phases/phase-9.5-release-readiness-audit.md), which certified the milestone baseline. The active codebase maintains **669 automated tests** (596 Node.js backend tests across 40 suites + 73 Python AI service tests across 5 files) with a 100% pass rate.
 
 | Automated Verification Check | Execution Command | Required Result | Verified Result | Status |
 | :--- | :--- | :--- | :---: | :---: |

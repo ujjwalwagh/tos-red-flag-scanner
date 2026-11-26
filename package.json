@@ -13,7 +13,7 @@
     "test": "node scripts/test-all.js",
     "test:backend": "node --test backend/tests/*.test.js"
   },
-  "homepage": "https://syllabuscal.ranjansharma.info.np",
+  "homepage": "https://github.com/ujjwalwagh/tos-red-flag-scanner",
   "keywords": [
     "terms-of-service",
     "privacy-policy",

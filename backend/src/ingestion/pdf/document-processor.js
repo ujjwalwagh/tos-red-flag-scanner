@@ -95,3 +95,30 @@ export async function processPdfDocument(pdfBuffer, options = {}) {
     rawText: extractionResult.rawText
   };
 }
+
+/**
+ * Extracts and cleans normalized text string from a PDF buffer.
+ * Capped at 24,000 characters for LLM scanning.
+ *
+ * @param {Buffer} pdfBuffer
+ * @returns {Promise<string>}
+ */
+export async function extractPdfTextFromBuffer(pdfBuffer) {
+  if (!pdfBuffer || !Buffer.isBuffer(pdfBuffer)) {
+    throw new AppError(400, "Uploaded file payload is invalid.");
+  }
+
+  try {
+    const result = await processPdfDocument(pdfBuffer);
+    const text = result.normalizedText || "";
+    if (!text.trim()) {
+      throw new AppError(422, "Could not read text from this PDF.");
+    }
+    return text.slice(0, 24_000);
+  } catch (error) {
+    if (error instanceof AppError) {
+      throw error;
+    }
+    throw new AppError(422, `Could not read text from this PDF: ${error?.message || "Invalid file"}`);
+  }
+}

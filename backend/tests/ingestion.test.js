@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
-import { processPdfDocument, validatePdfBuffer } from "../src/ingestion/pdf/document-processor.js";
+import { processPdfDocument, validatePdfBuffer, extractPdfTextFromBuffer } from "../src/ingestion/pdf/document-processor.js";
+import { ingestRawText } from "../src/ingestion/text/text-ingest.js";
 import { extractPdfPages } from "../src/ingestion/pdf/pdf-extractor.js";
 import { AppError } from "../src/security/security.js";
 import { extractReadableText, normalizeExtractedText, MAX_POLICY_TEXT_LENGTH, MAX_ANALYSIS_CHARACTERS } from "../src/ingestion/url/fetch-policy-text.js";
@@ -207,5 +208,45 @@ test("existing shorter-document extraction behavior remains unchanged", () => {
 
   const ingested = extracted.slice(0, MAX_POLICY_TEXT_LENGTH);
   assert.equal(ingested, extracted, "Shorter documents must not be truncated or modified in any way");
+});
+
+test("ingestRawText returns fully structured document with metadata, pages, and segments", () => {
+  const samplePolicy = "Section 1: Service Terms\nWelcome to our platform.\n\nSection 2: Privacy\nWe do not sell data.";
+  const doc = ingestRawText(samplePolicy, { filename: "custom-policy.txt" });
+
+  assert.ok(doc.metadata);
+  assert.equal(doc.metadata.filename, "custom-policy.txt");
+  assert.equal(doc.metadata.pageCount, 1);
+  assert.equal(doc.metadata.extractedPageCount, 1);
+  assert.equal(doc.metadata.requiresOcr, false);
+  assert.ok(doc.metadata.wordCount > 5);
+  assert.ok(doc.metadata.characterCount > 20);
+  assert.ok(doc.metadata.processedAt);
+
+  assert.equal(doc.pages.length, 1);
+  assert.equal(doc.pages[0].pageNumber, 1);
+  assert.equal(doc.pages[0].rawText, samplePolicy);
+  assert.ok(doc.pages[0].normalizedText.includes("Section 1"));
+
+  assert.ok(Array.isArray(doc.segments));
+  assert.ok(doc.segments.length > 0);
+  assert.equal(doc.rawText, samplePolicy);
+  assert.ok(doc.normalizedText.length > 0);
+});
+
+test("extractPdfTextFromBuffer extracts normalized text from valid PDF buffer", async () => {
+  const buffer = fs.readFileSync(VALID_PDF_PATH);
+  const text = await extractPdfTextFromBuffer(buffer);
+
+  assert.equal(typeof text, "string");
+  assert.ok(text.length > 100);
+  assert.ok(text.length <= 24_000);
+});
+
+test("extractPdfTextFromBuffer rejects non-buffer input with HTTP 400 AppError", async () => {
+  await assert.rejects(
+    () => extractPdfTextFromBuffer("not-a-buffer"),
+    (err) => err instanceof AppError && err.statusCode === 400
+  );
 });
 

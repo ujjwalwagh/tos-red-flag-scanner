@@ -1,7 +1,6 @@
 import axios from "axios";
 import { AppError } from "../../security/security.js";
-import { normalizeText, countWords, countCharacters } from "../../processing/normalization/text-normalizer.js";
-import { segmentDocumentPages } from "../../processing/segmentation/clause-segmenter.js";
+import { ingestRawText } from "../../ingestion/text/text-ingest.js";
 import { analyzeDocument } from "../../architecture/pipeline/analysis-pipeline.js";
 import { normalizeCategoryId } from "../risk-categories.js";
 
@@ -99,22 +98,9 @@ export async function scanPolicyForRedFlags(policyText, sourceUrl, options = {})
  * Operates 100% locally and offline without external API keys.
  */
 async function scanPolicyWithRuleEngine(policyText, sourceUrl, mode, options = {}) {
-  const normalized = normalizeText(policyText);
-  const pages = [{ pageNumber: 1, rawText: policyText, normalizedText: normalized }];
-  const segments = segmentDocumentPages(pages);
-
-  const doc = {
-    metadata: {
-      filename: sourceUrl || "policy-document",
-      pageCount: 1,
-      wordCount: countWords(normalized),
-      characterCount: countCharacters(normalized)
-    },
-    pages,
-    segments,
-    normalizedText: normalized,
-    rawText: policyText
-  };
+  const doc = ingestRawText(policyText, {
+    filename: sourceUrl || "policy-document"
+  });
 
   const analysis = await analyzeDocument(doc, { userPreferences: options.userPreferences });
   const findings = analysis.rankedFindings || analysis.findings || [];
@@ -171,7 +157,7 @@ async function scanPolicyWithRuleEngine(policyText, sourceUrl, mode, options = {
     scanMode: mode,
     overallRisk,
     flags,
-    segments
+    segments: doc.segments
   };
 }
 

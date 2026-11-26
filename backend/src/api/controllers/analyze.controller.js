@@ -2,8 +2,7 @@ import crypto from "node:crypto";
 import { AppError } from "../../security/security.js";
 import { processPdfDocument } from "../../ingestion/pdf/document-processor.js";
 import { analyzeDocument } from "../../architecture/pipeline/analysis-pipeline.js";
-import { normalizeText, countWords, countCharacters } from "../../processing/normalization/text-normalizer.js";
-import { segmentDocumentPages } from "../../processing/segmentation/clause-segmenter.js";
+import { ingestRawText } from "../../ingestion/text/text-ingest.js";
 import { getAllRiskCategories } from "../../analysis/risk-categories.js";
 import { compareClauses } from "../../analysis/semantic/clause-comparator.js";
 import { logAudit } from "../../utils/logger.js";
@@ -46,21 +45,9 @@ export async function analyzeDocumentController(req, res, next) {
         throw new AppError(400, "Invalid document JSON payload.");
       }
     } else if (typeof req.body?.policyText === "string" && req.body.policyText.trim()) {
-      const text = req.body.policyText.trim();
-      const normalized = normalizeText(text);
-      const pages = [{ pageNumber: 1, rawText: text, normalizedText: normalized }];
-      document = {
-        metadata: {
-          filename: req.body.filename || "pasted-policy.txt",
-          pageCount: 1,
-          wordCount: countWords(normalized),
-          characterCount: countCharacters(normalized)
-        },
-        pages,
-        segments: segmentDocumentPages(pages),
-        normalizedText: normalized,
-        rawText: text
-      };
+      document = ingestRawText(req.body.policyText, {
+        filename: req.body.filename || "pasted-policy.txt"
+      });
     }
 
     if (!document || (!document.pages && !document.segments && !document.normalizedText)) {
@@ -366,11 +353,8 @@ export async function qaDocumentController(req, res, next) {
     if (Array.isArray(clauses) && clauses.length > 0) {
       // Provided as clauses array
     } else if (typeof policyText === "string" && policyText.trim()) {
-      const text = policyText.trim();
-      const normalized = normalizeText(text);
-      const pages = [{ pageNumber: 1, rawText: text, normalizedText: normalized }];
-      const segments = segmentDocumentPages(pages);
-      clauses = segments.map((s, idx) => ({
+      const doc = ingestRawText(policyText);
+      clauses = doc.segments.map((s, idx) => ({
         clauseId: String(s.clauseId || `clause_${s.segmentIndex ?? idx}`),
         text: s.text,
         section: s.title || ""

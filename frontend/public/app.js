@@ -307,7 +307,6 @@ form.addEventListener("submit", async (event) => {
 async function renderResults(report) {
   window.currentReport = report;
   renderSummary(report);
-  addToVendorStack(report);
   prepareQaDocumentClauses(report);
   resultsEl.classList.remove("hidden");
 
@@ -892,55 +891,6 @@ function extractCompanyName(sourceUrl, fallbackLabel = "the Service Provider", p
 // =========================================================================
 // Multi-Vendor Stack & Session History
 // =========================================================================
-
-// =========================================================================
-// Phase 8: Multi-Vendor Matrix, Portfolio Risk & Statutory LexCheck UI
-// =========================================================================
-
-const sessionVendorStack = [];
-
-function addToVendorStack(report) {
-  if (!report) return;
-
-  // Preserve existing duplicate-prevention: do not add identical scan re-submits
-  const isDuplicateScan = sessionVendorStack.some((item) => {
-    if (item.sourceUrl && report.sourceUrl && item.sourceUrl === report.sourceUrl) {
-      const itemFlags = item.analysis?.flags || [];
-      const reportFlags = report.flags || [];
-      if (itemFlags.length === reportFlags.length) {
-        return itemFlags.every((f, idx) => f.title === reportFlags[idx]?.title && f.quote === reportFlags[idx]?.quote);
-      }
-    }
-    return false;
-  });
-  if (isDuplicateScan) return;
-
-  // Derive vendor name, inspecting available pasted policy text or preview
-  const candidateText =
-    report.policyText ||
-    report.text ||
-    (typeof window !== "undefined" && window.lastPastedPolicyText) ||
-    (typeof textInput !== "undefined" && textInput ? textInput.value : "");
-  let derivedName = extractCompanyName(report.sourceUrl, null, candidateText);
-  if (!derivedName || derivedName === "the Service Provider") {
-    derivedName = `Policy #${sessionVendorStack.length + 1}`;
-  }
-
-  // Ensure unique vendor name in stack so distinct scans don't collide in comparison matrix
-  let vendorName = derivedName;
-  let counter = 2;
-  while (sessionVendorStack.some((v) => v.vendorName.toLowerCase() === vendorName.toLowerCase())) {
-    vendorName = `${derivedName} (${counter})`;
-    counter++;
-  }
-
-  sessionVendorStack.push({
-    vendorName,
-    sourceUrl: report.sourceUrl,
-    analysis: report
-  });
-  if (sessionVendorStack.length > 10) sessionVendorStack.shift();
-}
 
 // Phase 9.4.4 Interactive Evidence-Grounded Q&A Module
 function prepareQaDocumentClauses(report) {
@@ -1577,4 +1527,4 @@ function initSaaSViews() {
 
 initSaaSViews();
 
-export { extractCompanyName, extractCompanyNameFromText, addToVendorStack, sessionVendorStack, renderQaResult, formatSimilarityScore, initSaaSViews };
+export { extractCompanyName, extractCompanyNameFromText, renderQaResult, formatSimilarityScore, initSaaSViews };
